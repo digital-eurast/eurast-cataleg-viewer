@@ -410,8 +410,12 @@
       margin-top: 10px;
       transition: background .15s;
     }
-    .btn-modal-submit:hover    { background: var(--primary-h); }
-    .btn-modal-submit:disabled { opacity: .6; cursor: default; }
+    .btn-modal-submit:hover:not(:disabled) { background: var(--primary-h); }
+    .btn-modal-submit:disabled {
+      background: var(--grey-lt);
+      color: var(--grey-md);
+      cursor: not-allowed;
+    }
 
     /* privacy checkbox */
     .form-privacy { margin-top: 8px; }
@@ -420,9 +424,13 @@
       cursor: pointer;
     }
     .privacy-label input[type="checkbox"] {
-      flex-shrink: 0; width: 16px; height: 16px;
-      margin-top: 2px;
-      accent-color: var(--primary); cursor: pointer;
+      flex-shrink: 0;
+      width: 16px; height: 16px;
+      margin-top: 1px;
+      accent-color: var(--primary);
+      cursor: pointer;
+      appearance: auto;
+      -webkit-appearance: checkbox;
     }
     .privacy-label span {
       font-size: 11px; color: var(--grey-md);
@@ -526,12 +534,12 @@
         <input type="text"  id="leadCompany" autocomplete="organization" placeholder="Nombre de tu empresa">
       </div>
       <div class="form-field form-privacy">
-        <label class="privacy-label" for="leadPrivacy">
-          <input type="checkbox" id="leadPrivacy" required>
+        <label class="privacy-label">
+          <input type="checkbox" id="leadPrivacy">
           <span id="modal-privacy-span">He leído y acepto la <a href="https://eurast.com/es/apartado/5-politica-de-privacidad/" target="_blank" rel="noopener noreferrer">política de privacidad</a> y acepto recibir comunicaciones comerciales</span>
         </label>
       </div>
-      <button type="submit" class="btn-modal-submit" id="modal-submit">↓ Descargar PDF</button>
+      <button type="submit" class="btn-modal-submit" id="modal-submit" disabled>↓ Descargar PDF</button>
     </form>
   </div>
 </div>
@@ -870,7 +878,7 @@ function updateModal(lang) {
   document.getElementById('leadCompany').placeholder         = m.companyPh;
   document.getElementById('modal-privacy-span').innerHTML    = m.privacyHtml;
   const submitBtn = document.getElementById('modal-submit');
-  if (!submitBtn.disabled) submitBtn.textContent             = m.submit;
+  submitBtn.textContent = m.submit;
 }
 
 function triggerDownload() {
@@ -890,9 +898,9 @@ function openModal() {
 
 function closeModal() {
   document.getElementById('leadModal').hidden = true;
-  // Reset submit button in case it was disabled
+  document.getElementById('leadPrivacy').checked = false;
   const btn = document.getElementById('modal-submit');
-  btn.disabled    = false;
+  btn.disabled    = true;
   btn.textContent = STRINGS[currentLang].modal.submit;
 }
 
@@ -935,6 +943,11 @@ document.getElementById('btn-dl').addEventListener('click', e => {
   openModal();
 });
 
+// Checkbox enables/disables the submit button
+document.getElementById('leadPrivacy').addEventListener('change', e => {
+  document.getElementById('modal-submit').disabled = !e.target.checked;
+});
+
 // Close modal on backdrop click or X button
 document.getElementById('leadModal').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeModal();
@@ -946,16 +959,9 @@ document.getElementById('leadForm').addEventListener('submit', async e => {
   e.preventDefault();
   const email   = document.getElementById('leadEmail').value.trim();
   const company = document.getElementById('leadCompany').value.trim();
-  const privacy = document.getElementById('leadPrivacy').checked;
 
   if (!email || !email.includes('@')) {
     document.getElementById('leadEmail').focus();
-    return;
-  }
-  if (!privacy) {
-    document.getElementById('leadPrivacy').focus();
-    document.getElementById('leadPrivacy').style.outline = '2px solid var(--primary)';
-    setTimeout(() => { document.getElementById('leadPrivacy').style.outline = ''; }, 1500);
     return;
   }
   await submitLead(email, company);
