@@ -823,11 +823,10 @@ function unloadSlot(num) {
     entry.task?.cancel();
     renderQueue.delete(num);
   }
-  if (!rendered.has(num)) return;
-  const slot = slots[num - 1];
-  if (!slot) return;
-  slot.innerHTML = LOADER_HTML;
   rendered.delete(num);
+  // Clear slot if it has a canvas — covers both fully-rendered and mid-render (canvas added before render completes)
+  const slot = slots[num - 1];
+  if (slot?.querySelector('canvas')) slot.innerHTML = LOADER_HTML;
 }
 
 // ── VIRTUAL SCROLL OBSERVER ────────────────────────────────────────
@@ -843,8 +842,10 @@ const pageObs = new IntersectionObserver(entries => {
     for (let i = Math.max(1, n - PRERENDER); i <= Math.min(totalPages, n + PRERENDER); i++) {
       renderSlot(i);
     }
-    rendered.forEach(r => {
-      if (Math.abs(r - n) > UNLOAD_FAR) unloadSlot(r);
+    // Use DOM as source of truth — rendered Set may lag behind actual state
+    viewer.querySelectorAll('.page-slot canvas').forEach(cvs => {
+      const r = parseInt(cvs.closest('.page-slot')?.dataset.page);
+      if (r && Math.abs(r - n) > UNLOAD_FAR) unloadSlot(r);
     });
   });
 }, { root: viewer, threshold: 0.3 });
@@ -1036,10 +1037,15 @@ function goTo(n) {
   const dist = Math.abs(n - currentPage);
 
   if (dist > 4) {
-    // Long jump: disable observer, pre-render destination, instant scroll
+    // Long jump: disable observer, unload stale pages, pre-render destination, instant scroll
     observerReady = false;
     currentPage   = n;
     updateNav(n);
+    // Unload pages far from destination — use DOM as source of truth, not rendered Set
+    viewer.querySelectorAll('.page-slot canvas').forEach(cvs => {
+      const p = parseInt(cvs.closest('.page-slot')?.dataset.page);
+      if (p && Math.abs(p - n) > UNLOAD_FAR) unloadSlot(p);
+    });
     renderSlot(n);
     for (let i = Math.max(1, n - PRERENDER); i <= Math.min(totalPages, n + PRERENDER); i++) {
       renderSlot(i);
