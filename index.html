@@ -412,16 +412,92 @@
     .btn-modal-submit:hover    { background: var(--primary-h); }
     .btn-modal-submit:disabled { opacity: .6; cursor: default; }
 
-    .modal-skip {
-      display: block; width: 100%; margin-top: 10px;
-      background: none; border: none;
-      font-size: 11px; color: var(--grey-md);
-      font-family: inherit; cursor: pointer;
-      text-align: center; padding: 6px;
-      border-radius: 6px; text-decoration: underline;
-      transition: color .12s;
+    /* privacy checkbox */
+    .form-privacy { margin-top: 8px; }
+    .privacy-label {
+      display: flex; gap: 9px; align-items: flex-start;
+      cursor: pointer;
     }
-    .modal-skip:hover { color: var(--text); }
+    .privacy-label input[type="checkbox"] {
+      flex-shrink: 0; width: 16px; height: 16px;
+      margin-top: 2px;
+      accent-color: var(--primary); cursor: pointer;
+    }
+    .privacy-label span {
+      font-size: 11px; color: var(--grey-md);
+      font-weight: 500; line-height: 1.5;
+    }
+    .privacy-label a { color: var(--primary); text-underline-offset: 2px; }
+    .privacy-label a:hover { text-decoration: none; }
+
+    /* language selector (header) */
+    .lang-select {
+      height: 32px;
+      border: 1px solid var(--border);
+      background: var(--grey-lt);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: .07em;
+      padding: 0 22px 0 9px;
+      border-radius: 7px;
+      cursor: pointer;
+      -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23A9A9AA' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 7px center;
+      outline: none;
+      transition: all .12s;
+    }
+    .lang-select:hover { background-color: var(--border); }
+
+    /* mobile menu button (hidden on desktop) */
+    .btn-menu {
+      display: none;
+      background: none; border: none;
+      font-size: 20px; line-height: 1;
+      color: var(--text); cursor: pointer;
+      padding: 4px 8px; border-radius: 6px;
+      transition: background .12s; font-family: inherit;
+    }
+    .btn-menu:hover { background: var(--grey-lt); }
+
+    /* sidebar backdrop (mobile) */
+    #sidebarBackdrop {
+      display: none; position: fixed; inset: 0;
+      z-index: 99; background: rgba(0,0,0,0.32);
+    }
+
+    /* ── MOBILE ─────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .logo-label { display: none; }
+      #zoomGroup, #zoomDivider { display: none; }
+      .btn-menu { display: flex; align-items: center; }
+
+      .sidebar {
+        position: fixed;
+        top: 52px; left: 0; bottom: 0;
+        z-index: 100;
+        transform: translateX(-100%);
+        transition: transform .25s ease;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.18);
+      }
+      .sidebar.open { transform: translateX(0); }
+      #sidebarBackdrop.open { display: block; }
+
+      .modal-overlay { align-items: flex-end; padding: 0; }
+      .modal-box {
+        border-radius: 20px 20px 0 0;
+        padding: 24px 20px 32px;
+        max-width: 100%;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        animation: mBoxMobileIn .25s ease;
+      }
+    }
+    @keyframes mBoxMobileIn {
+      from { transform: translateY(60px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
   </style>
 </head>
 <body>
@@ -458,9 +534,14 @@
           <option value="OTHER">Otro / Other</option>
         </select>
       </div>
+      <div class="form-field form-privacy">
+        <label class="privacy-label" for="leadPrivacy">
+          <input type="checkbox" id="leadPrivacy" required>
+          <span id="modal-privacy-span">He leído y acepto la <a href="https://eurast.es/politica-privacidad" target="_blank" rel="noopener noreferrer">política de privacidad</a></span>
+        </label>
+      </div>
       <button type="submit" class="btn-modal-submit" id="modal-submit">↓ Descargar PDF</button>
     </form>
-    <button class="modal-skip" id="modal-skip">Continuar sin registrarme</button>
   </div>
 </div>
 
@@ -477,31 +558,35 @@
     <div class="logo-label" id="header-label">Catálogo Tarifa RCR Completa</div>
   </div>
   <div class="toolbar">
+    <button class="btn-menu" id="btnMenu" aria-label="Menu">☰</button>
     <div class="ctrl-group">
       <button id="btnPrev" disabled>‹</button>
       <input id="pageInput" type="number" value="1" min="1">
       <span>/ <span id="totalLbl">—</span></span>
       <button id="btnNext">›</button>
     </div>
-    <div class="divider"></div>
-    <div class="ctrl-group">
+    <div class="divider" id="zoomDivider"></div>
+    <div class="ctrl-group" id="zoomGroup">
       <button id="btnZoomOut">−</button>
       <span id="zoomLbl">100%</span>
       <button id="btnZoomIn">+</button>
     </div>
     <div class="divider"></div>
+    <select class="lang-select" id="langSelect">
+      <option value="es">ES</option>
+      <option value="en">EN</option>
+      <option value="fr">FR</option>
+      <option value="de">DE</option>
+      <option value="it">IT</option>
+      <option value="pt">PT</option>
+    </select>
     <a class="btn-dl" id="btn-dl" href="cataleg.pdf" download>↓ Descargar PDF</a>
   </div>
 </header>
 
 <div class="layout">
+  <div id="sidebarBackdrop"></div>
   <div class="sidebar" id="sidebar">
-    <div class="lang-tabs">
-      <button class="lang-btn active" data-lang="es">ES</button>
-      <button class="lang-btn" data-lang="en">EN</button>
-      <button class="lang-btn" data-lang="fr">FR</button>
-      <button class="lang-btn" data-lang="de">DE</button>
-    </div>
     <div class="nav-label" id="nav-label">Grupos</div>
   </div>
   <div class="viewer" id="viewer"></div>
@@ -533,8 +618,8 @@ const STRINGS = {
       sub: 'Déjanos tu email y país para acceder al PDF completo',
       emailLabel: 'Email *', emailPh: 'tu@empresa.com',
       companyLabel: 'Empresa', companyPh: 'Nombre de tu empresa',
-      countryLabel: 'País', submit: '↓ Descargar PDF',
-      skip: 'Continuar sin registrarme', sending: 'Enviando...',
+      countryLabel: 'País', submit: '↓ Descargar PDF', sending: 'Enviando...',
+      privacyHtml: 'He leído y acepto la <a href="https://eurast.es/politica-privacidad" target="_blank" rel="noopener">política de privacidad</a>',
     },
   },
   en: {
@@ -545,8 +630,8 @@ const STRINGS = {
       sub: 'Leave your email and country to access the full PDF',
       emailLabel: 'Email *', emailPh: 'you@company.com',
       companyLabel: 'Company', companyPh: 'Your company name',
-      countryLabel: 'Country', submit: '↓ Download PDF',
-      skip: 'Continue without registering', sending: 'Sending...',
+      countryLabel: 'Country', submit: '↓ Download PDF', sending: 'Sending...',
+      privacyHtml: 'I have read and accept the <a href="https://eurast.es/privacy-policy" target="_blank" rel="noopener">privacy policy</a>',
     },
   },
   fr: {
@@ -557,8 +642,8 @@ const STRINGS = {
       sub: 'Laissez votre email et pays pour accéder au PDF complet',
       emailLabel: 'Email *', emailPh: 'vous@entreprise.com',
       companyLabel: 'Entreprise', companyPh: 'Nom de votre entreprise',
-      countryLabel: 'Pays', submit: '↓ Télécharger PDF',
-      skip: "Continuer sans m'enregistrer", sending: 'Envoi en cours...',
+      countryLabel: 'Pays', submit: '↓ Télécharger PDF', sending: 'Envoi en cours...',
+      privacyHtml: "J'ai lu et j'accepte la <a href=\"https://eurast.es/politique-confidentialite\" target=\"_blank\" rel=\"noopener\">politique de confidentialité</a>",
     },
   },
   de: {
@@ -569,8 +654,32 @@ const STRINGS = {
       sub: 'Hinterlassen Sie Ihre E-Mail und Ihr Land für den vollständigen PDF-Zugriff',
       emailLabel: 'E-Mail *', emailPh: 'sie@unternehmen.de',
       companyLabel: 'Unternehmen', companyPh: 'Name Ihres Unternehmens',
-      countryLabel: 'Land', submit: '↓ PDF herunterladen',
-      skip: 'Ohne Registrierung fortfahren', sending: 'Wird gesendet...',
+      countryLabel: 'Land', submit: '↓ PDF herunterladen', sending: 'Wird gesendet...',
+      privacyHtml: 'Ich habe die <a href="https://eurast.es/datenschutz" target="_blank" rel="noopener">Datenschutzerklärung</a> gelesen und akzeptiere sie',
+    },
+  },
+  it: {
+    navLabel: 'Gruppi', headerSub: 'Catalogo Prezzi RCR Completo', download: '↓ Scarica PDF',
+    loading: '0%', loadingSub: 'La prima pagina apparirà tra pochi secondi',
+    modal: {
+      title: 'Scarica il catalogo',
+      sub: 'Lascia la tua email e paese per accedere al PDF completo',
+      emailLabel: 'Email *', emailPh: 'tu@azienda.com',
+      companyLabel: 'Azienda', companyPh: 'Nome della tua azienda',
+      countryLabel: 'Paese', submit: '↓ Scarica PDF', sending: 'Invio in corso...',
+      privacyHtml: 'Ho letto e accetto la <a href="https://eurast.es/privacy" target="_blank" rel="noopener">informativa sulla privacy</a>',
+    },
+  },
+  pt: {
+    navLabel: 'Grupos', headerSub: 'Catálogo Preços RCR Completo', download: '↓ Descarregar PDF',
+    loading: '0%', loadingSub: 'A primeira página aparecerá em poucos segundos',
+    modal: {
+      title: 'Descarregar o catálogo',
+      sub: 'Deixe o seu email e país para aceder ao PDF completo',
+      emailLabel: 'Email *', emailPh: 'voce@empresa.com',
+      companyLabel: 'Empresa', companyPh: 'Nome da sua empresa',
+      countryLabel: 'País', submit: '↓ Descarregar PDF', sending: 'A enviar...',
+      privacyHtml: 'Li e aceito a <a href="https://eurast.es/politica-privacidade" target="_blank" rel="noopener">política de privacidade</a>',
     },
   },
 };
@@ -578,22 +687,22 @@ let currentLang = 'es';
 
 // ── GROUPS — multilingual, declared at top ─────────────────────────
 const GROUPS = [
-  { id: 'G01', page:   1, es: 'Máquinas Bar',       en: 'Bar Machines',             fr: 'Machines Bar',              de: 'Barmaschinen' },
-  { id: 'G02', page:  47, es: 'Cocinas 450/550',     en: 'Cooking Ranges 450/550',   fr: 'Cuisinières 450/550',       de: 'Kochgeräte 450/550' },
-  { id: 'G03', page:  65, es: 'Cocinas 600',         en: 'Cooking Ranges 600',       fr: 'Cuisinières 600',           de: 'Kochgeräte 600' },
-  { id: 'G04', page:  93, es: 'Cocinas 700',         en: 'Cooking Ranges 700',       fr: 'Cuisinières 700',           de: 'Kochgeräte 700' },
-  { id: 'G05', page: 151, es: 'Cocinas 900',         en: 'Cooking Ranges 900',       fr: 'Cuisinières 900',           de: 'Kochgeräte 900' },
-  { id: 'G06', page: 207, es: 'Gran Producción',     en: 'Large Scale Production',   fr: 'Grande Production',         de: 'Großproduktion' },
-  { id: 'G07', page: 248, es: 'Equipos Calientes',   en: 'Hot Equipment',            fr: 'Équipements Chauds',        de: 'Heißgeräte' },
-  { id: 'G08', page: 286, es: 'Hornos / Ovens',      en: 'Ovens',                    fr: 'Fours',                     de: 'Öfen' },
-  { id: 'G09', page: 342, es: 'Asadores & BBQ',      en: 'Grills & BBQ',             fr: 'Rôtissoires & BBQ',         de: 'Grills & BBQ' },
-  { id: 'G10', page: 391, es: 'Campanas',            en: 'Hoods',                    fr: 'Hottes',                    de: 'Dunstabzugshauben' },
-  { id: 'G11', page: 425, es: 'Frío Industrial',     en: 'Industrial Refrigeration', fr: 'Réfrigération Industrielle',de: 'Industriekühlung' },
-  { id: 'G12', page: 498, es: 'Vitrinas',            en: 'Display Cases',            fr: 'Vitrines Réfrigérées',      de: 'Vitrinen' },
-  { id: 'G13', page: 590, es: 'Lavado / Washing',    en: 'Warewashing',              fr: 'Lavage / Plonge',           de: 'Spülgeräte' },
-  { id: 'G14', page: 662, es: 'Elementos Neutros',   en: 'Neutral Equipment',        fr: 'Éléments Neutres',          de: 'Neutrale Elemente' },
-  { id: 'G15', page: 733, es: 'Drop-in / Buffets',   en: 'Drop-in / Buffets',        fr: 'Drop-in / Buffets',         de: 'Drop-in / Büfetts' },
-  { id: 'G16', page: 817, es: 'Maquinaria Auxiliar', en: 'Auxiliary Machinery',      fr: 'Machines Auxiliaires',      de: 'Hilfsmaschinen' },
+  { id: 'G01', page:   1, es: 'Máquinas Bar',       en: 'Bar Machines',             fr: 'Machines Bar',              de: 'Barmaschinen',         it: 'Macchine Bar',                  pt: 'Máquinas Bar' },
+  { id: 'G02', page:  47, es: 'Cocinas 450/550',     en: 'Cooking Ranges 450/550',   fr: 'Cuisinières 450/550',       de: 'Kochgeräte 450/550',   it: 'Cucine 450/550',                pt: 'Fogões 450/550' },
+  { id: 'G03', page:  65, es: 'Cocinas 600',         en: 'Cooking Ranges 600',       fr: 'Cuisinières 600',           de: 'Kochgeräte 600',       it: 'Cucine 600',                    pt: 'Fogões 600' },
+  { id: 'G04', page:  93, es: 'Cocinas 700',         en: 'Cooking Ranges 700',       fr: 'Cuisinières 700',           de: 'Kochgeräte 700',       it: 'Cucine 700',                    pt: 'Fogões 700' },
+  { id: 'G05', page: 151, es: 'Cocinas 900',         en: 'Cooking Ranges 900',       fr: 'Cuisinières 900',           de: 'Kochgeräte 900',       it: 'Cucine 900',                    pt: 'Fogões 900' },
+  { id: 'G06', page: 207, es: 'Gran Producción',     en: 'Large Scale Production',   fr: 'Grande Production',         de: 'Großproduktion',       it: 'Grande Produzione',             pt: 'Grande Produção' },
+  { id: 'G07', page: 248, es: 'Equipos Calientes',   en: 'Hot Equipment',            fr: 'Équipements Chauds',        de: 'Heißgeräte',           it: 'Attrezzature Calde',            pt: 'Equipamentos Quentes' },
+  { id: 'G08', page: 286, es: 'Hornos / Ovens',      en: 'Ovens',                    fr: 'Fours',                     de: 'Öfen',                 it: 'Forni',                         pt: 'Fornos' },
+  { id: 'G09', page: 342, es: 'Asadores & BBQ',      en: 'Grills & BBQ',             fr: 'Rôtissoires & BBQ',         de: 'Grills & BBQ',         it: 'Griglie & BBQ',                 pt: 'Grelhadores & BBQ' },
+  { id: 'G10', page: 391, es: 'Campanas',            en: 'Hoods',                    fr: 'Hottes',                    de: 'Dunstabzugshauben',    it: 'Cappe',                         pt: 'Campânulas' },
+  { id: 'G11', page: 425, es: 'Frío Industrial',     en: 'Industrial Refrigeration', fr: 'Réfrigération Industrielle',de: 'Industriekühlung',     it: 'Refrigerazione Industriale',    pt: 'Frio Industrial' },
+  { id: 'G12', page: 498, es: 'Vitrinas',            en: 'Display Cases',            fr: 'Vitrines Réfrigérées',      de: 'Vitrinen',             it: 'Vetrine Refrigerate',           pt: 'Vitrines Refrigeradas' },
+  { id: 'G13', page: 590, es: 'Lavado / Washing',    en: 'Warewashing',              fr: 'Lavage / Plonge',           de: 'Spülgeräte',           it: 'Lavaggio',                      pt: 'Lavagem' },
+  { id: 'G14', page: 662, es: 'Elementos Neutros',   en: 'Neutral Equipment',        fr: 'Éléments Neutres',          de: 'Neutrale Elemente',    it: 'Elementi Neutri',               pt: 'Elementos Neutros' },
+  { id: 'G15', page: 733, es: 'Drop-in / Buffets',   en: 'Drop-in / Buffets',        fr: 'Drop-in / Buffets',         de: 'Drop-in / Büfetts',    it: 'Drop-in / Buffet',              pt: 'Drop-in / Buffets' },
+  { id: 'G16', page: 817, es: 'Maquinaria Auxiliar', en: 'Auxiliary Machinery',      fr: 'Machines Auxiliaires',      de: 'Hilfsmaschinen',       it: 'Macchinari Ausiliari',          pt: 'Maquinaria Auxiliar' },
 ];
 
 // ── LOAD PDF ───────────────────────────────────────────────────────
@@ -741,8 +850,8 @@ GROUPS.forEach((g, idx) => {
 // ── LANGUAGE SWITCHER ──────────────────────────────────────────────
 function setLang(lang) {
   currentLang = lang;
-  document.querySelectorAll('.lang-btn').forEach(b =>
-    b.classList.toggle('active', b.dataset.lang === lang));
+  const sel = document.getElementById('langSelect');
+  if (sel && sel.value !== lang) sel.value = lang;
   document.getElementById('nav-label').textContent      = STRINGS[lang].navLabel;
   document.getElementById('header-label').textContent   = STRINGS[lang].headerSub;
   document.getElementById('btn-dl').textContent         = STRINGS[lang].download;
@@ -753,8 +862,7 @@ function setLang(lang) {
   updateModal(lang);
 }
 
-document.querySelectorAll('.lang-btn').forEach(btn =>
-  btn.addEventListener('click', () => setLang(btn.dataset.lang)));
+document.getElementById('langSelect').addEventListener('change', e => setLang(e.target.value));
 
 // ── LEAD CAPTURE MODAL ─────────────────────────────────────────────
 const LEAD_WEBHOOK = 'https://hook.eu2.make.com/mwd601h4jm5tlgo2glc1aw4fkuyf2gs7';
@@ -769,9 +877,9 @@ function updateModal(lang) {
   document.getElementById('modal-company-label').textContent = m.companyLabel;
   document.getElementById('leadCompany').placeholder         = m.companyPh;
   document.getElementById('modal-country-label').textContent = m.countryLabel;
+  document.getElementById('modal-privacy-span').innerHTML    = m.privacyHtml;
   const submitBtn = document.getElementById('modal-submit');
   if (!submitBtn.disabled) submitBtn.textContent             = m.submit;
-  document.getElementById('modal-skip').textContent          = m.skip;
 }
 
 function triggerDownload() {
@@ -835,27 +943,47 @@ document.getElementById('btn-dl').addEventListener('click', e => {
   openModal();
 });
 
-// Close modal on backdrop click
+// Close modal on backdrop click or X button
 document.getElementById('leadModal').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeModal();
 });
 document.getElementById('modalClose').addEventListener('click', closeModal);
-document.getElementById('modal-skip').addEventListener('click', () => {
-  closeModal();
-  triggerDownload();
-});
 
-// Form submit
+// Form submit — requires email + privacy checkbox
 document.getElementById('leadForm').addEventListener('submit', async e => {
   e.preventDefault();
   const email   = document.getElementById('leadEmail').value.trim();
   const company = document.getElementById('leadCompany').value.trim();
   const country = document.getElementById('leadCountry').value;
+  const privacy = document.getElementById('leadPrivacy').checked;
+
   if (!email || !email.includes('@')) {
     document.getElementById('leadEmail').focus();
     return;
   }
+  if (!privacy) {
+    document.getElementById('leadPrivacy').focus();
+    document.getElementById('leadPrivacy').style.outline = '2px solid var(--primary)';
+    setTimeout(() => { document.getElementById('leadPrivacy').style.outline = ''; }, 1500);
+    return;
+  }
   await submitLead(email, company, country);
+});
+
+// ── MOBILE SIDEBAR TOGGLE ──────────────────────────────────────────
+const btnMenu   = document.getElementById('btnMenu');
+const backdrop  = document.getElementById('sidebarBackdrop');
+
+function openSidebar()  { sidebar.classList.add('open'); backdrop.classList.add('open'); }
+function closeSidebar() { sidebar.classList.remove('open'); backdrop.classList.remove('open'); }
+
+btnMenu.addEventListener('click', () =>
+  sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
+backdrop.addEventListener('click', closeSidebar);
+
+// Close sidebar when a group is tapped on mobile
+sidebar.addEventListener('click', e => {
+  if (e.target.closest('.nav-item')) closeSidebar();
 });
 
 // ── RENDER INITIAL PAGES ───────────────────────────────────────────
