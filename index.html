@@ -315,7 +315,12 @@ const sampleVP    = samplePage.getViewport({ scale: 1 });
 const sampleRatio = sampleVP.height / sampleVP.width;
 
 function calcPageWidth() {
-  return viewer.clientWidth; // full width
+  // Fit the page so its full height is visible on screen (like Acrobat "Fit Page")
+  // Cap at viewer width so it never overflows horizontally
+  const viewerH  = viewer.clientHeight - 32;
+  const fitByH   = viewerH / sampleRatio;
+  const maxW     = viewer.clientWidth - 8;
+  return Math.min(fitByH, maxW) * zoom;
 }
 
 function buildSlots() {
