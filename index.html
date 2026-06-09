@@ -227,6 +227,8 @@
       overflow-y: auto;
       overflow-x: hidden;
       background: var(--surface);
+      -webkit-overflow-scrolling: touch;
+      will-change: scroll-position;
     }
     .viewer::-webkit-scrollbar { width: 7px; }
     .viewer::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -237,6 +239,7 @@
       background: #fff;
       box-shadow: 0 2px 12px rgba(57,72,90,0.10), 0 0 0 1px rgba(0,0,0,0.04);
       position: relative;
+      contain: layout;
     }
     .page-slot canvas {
       position: absolute;
@@ -597,8 +600,9 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
 
 // ── STATE ──────────────────────────────────────────────────────────
-const PRERENDER  = 2;
-const UNLOAD_FAR = 8;
+const IS_MOBILE  = window.innerWidth <= 640 || 'ontouchstart' in window;
+const PRERENDER  = IS_MOBILE ? 1 : 2;
+const UNLOAD_FAR = IS_MOBILE ? 4 : 8;
 
 const viewer  = document.getElementById('viewer');
 const sidebar = document.getElementById('sidebar');
@@ -773,39 +777,52 @@ await new Promise(r => setTimeout(r, 50));
 buildSlots();
 
 // ── RENDER PAGE INTO SLOT ──────────────────────────────────────────
-const renderQueue = new Map();
+const renderQueue = new Map(); // num → { promise, task }
 
 async function renderSlot(num) {
   if (rendered.has(num)) return;
-  if (renderQueue.has(num)) return renderQueue.get(num);
+  if (renderQueue.has(num)) return renderQueue.get(num).promise;
 
-  const promise = (async () => {
-    const slot = slots[num - 1];
-    if (!slot) return;
+  const entry = { promise: null, task: null };
+  renderQueue.set(num, entry);
 
-    const page  = await pdf.getPage(num);
-    const scale = calcPageWidth() / page.getViewport({ scale: 1 }).width;
-    const vp    = page.getViewport({ scale });
+  entry.promise = (async () => {
+    try {
+      const slot = slots[num - 1];
+      if (!slot) return;
 
-    slot.style.width  = vp.width  + 'px';
-    slot.style.height = vp.height + 'px';
+      const page  = await pdf.getPage(num);
+      const scale = calcPageWidth() / page.getViewport({ scale: 1 }).width;
+      const vp    = page.getViewport({ scale });
 
-    const canvas = document.createElement('canvas');
-    canvas.width  = vp.width;
-    canvas.height = vp.height;
-    slot.appendChild(canvas);
+      slot.style.width  = vp.width  + 'px';
+      slot.style.height = vp.height + 'px';
 
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-    rendered.add(num);
-    slot.querySelector('.page-loader')?.remove();
+      const canvas = document.createElement('canvas');
+      canvas.width  = vp.width;
+      canvas.height = vp.height;
+      slot.appendChild(canvas);
+
+      entry.task = page.render({ canvasContext: canvas.getContext('2d'), viewport: vp });
+      await entry.task.promise;
+      rendered.add(num);
+      slot.querySelector('.page-loader')?.remove();
+    } catch(e) {
+      // render cancelled or page fetch failed — ignore
+    } finally {
+      renderQueue.delete(num);
+    }
   })();
 
-  renderQueue.set(num, promise);
-  await promise;
-  renderQueue.delete(num);
+  return entry.promise;
 }
 
 function unloadSlot(num) {
+  const entry = renderQueue.get(num);
+  if (entry) {
+    entry.task?.cancel();
+    renderQueue.delete(num);
+  }
   if (!rendered.has(num)) return;
   const slot = slots[num - 1];
   if (!slot) return;
@@ -1039,6 +1056,8 @@ document.getElementById('btnNext').addEventListener('click', () => goTo(currentP
 document.getElementById('pageInput').addEventListener('change', e => goTo(parseInt(e.target.value) || 1));
 
 // ── ZOOM ───────────────────────────────────────────────────────────
+let zoomTimer = null;
+
 function applyZoom() {
   document.getElementById('zoomLbl').textContent = Math.round(zoom * 100) + '%';
   const w = calcPageWidth();
@@ -1046,12 +1065,19 @@ function applyZoom() {
     s.style.width  = w + 'px';
     s.style.height = Math.round(w * sampleRatio) + 'px';
   });
-  rendered.clear();
-  slots.forEach(s => { s.innerHTML = LOADER_HTML; });
-  renderSlot(currentPage);
-  for (let i = Math.max(1, currentPage - PRERENDER); i <= Math.min(totalPages, currentPage + PRERENDER); i++) {
-    renderSlot(i);
-  }
+
+  clearTimeout(zoomTimer);
+  zoomTimer = setTimeout(() => {
+    // Cancel any in-progress renders before starting fresh
+    renderQueue.forEach(e => e.task?.cancel());
+    renderQueue.clear();
+    rendered.clear();
+    slots.forEach(s => { s.innerHTML = LOADER_HTML; });
+    renderSlot(currentPage);
+    for (let i = Math.max(1, currentPage - PRERENDER); i <= Math.min(totalPages, currentPage + PRERENDER); i++) {
+      renderSlot(i);
+    }
+  }, IS_MOBILE ? 350 : 50);
 }
 
 document.getElementById('btnZoomIn').addEventListener('click', () => {
