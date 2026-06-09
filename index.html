@@ -321,9 +321,148 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-pct { font-size: 21px; font-weight: 700; color: var(--primary); }
     .loading-sub { font-size: 12px; color: var(--grey-md); font-weight: 500; }
+
+    /* ── LEAD CAPTURE MODAL ─────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.52);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      animation: mOverlayIn .18s ease;
+    }
+    .modal-overlay[hidden] { display: none !important; }
+    @keyframes mOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal-box {
+      background: #fff;
+      border-radius: 18px;
+      padding: 32px 28px 22px;
+      max-width: 390px;
+      width: 100%;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.22);
+      position: relative;
+      animation: mBoxIn .22s cubic-bezier(.34,1.2,.64,1);
+    }
+    @keyframes mBoxIn {
+      from { transform: translateY(18px) scale(.97); opacity: 0; }
+      to   { transform: translateY(0) scale(1);      opacity: 1; }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px; right: 16px;
+      background: none; border: none;
+      font-size: 20px; line-height: 1;
+      color: var(--grey-md);
+      cursor: pointer;
+      padding: 4px 7px;
+      border-radius: 6px;
+      transition: all .12s;
+      font-family: inherit;
+    }
+    .modal-close:hover { background: var(--grey-lt); color: var(--text); }
+
+    .modal-logo  { height: 30px; width: auto; display: block; margin-bottom: 18px; }
+    .modal-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 5px; line-height: 1.3; }
+    .modal-sub   { font-size: 12px; color: var(--grey-md); font-weight: 500; margin-bottom: 20px; line-height: 1.55; }
+
+    .form-field { margin-bottom: 11px; }
+    .form-field label {
+      display: block;
+      font-size: 11px; font-weight: 600;
+      color: var(--text);
+      margin-bottom: 5px;
+      letter-spacing: .02em;
+    }
+    .form-field input,
+    .form-field select {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      background: #fff;
+      outline: none;
+      transition: border-color .12s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .form-field input:focus,
+    .form-field select:focus { border-color: var(--primary); }
+    .form-field input::placeholder { color: var(--grey-md); font-weight: 400; }
+    .form-field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A9A9AA' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; padding-right: 30px; }
+
+    .btn-modal-submit {
+      width: 100%; padding: 12px;
+      background: var(--primary); color: #fff;
+      border: none; border-radius: 9px;
+      font-size: 13px; font-weight: 700;
+      font-family: inherit; cursor: pointer;
+      margin-top: 10px;
+      transition: background .15s;
+    }
+    .btn-modal-submit:hover    { background: var(--primary-h); }
+    .btn-modal-submit:disabled { opacity: .6; cursor: default; }
+
+    .modal-skip {
+      display: block; width: 100%; margin-top: 10px;
+      background: none; border: none;
+      font-size: 11px; color: var(--grey-md);
+      font-family: inherit; cursor: pointer;
+      text-align: center; padding: 6px;
+      border-radius: 6px; text-decoration: underline;
+      transition: color .12s;
+    }
+    .modal-skip:hover { color: var(--text); }
   </style>
 </head>
 <body>
+
+<!-- ── LEAD CAPTURE MODAL ─────────────────────────────────────── -->
+<div id="leadModal" class="modal-overlay" hidden>
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+    <img src="logo.png" class="modal-logo" alt="EURAST">
+    <h2 class="modal-title" id="modal-title">Descarga el catálogo</h2>
+    <p class="modal-sub"  id="modal-sub">Déjanos tu email y país para acceder al PDF completo</p>
+    <form id="leadForm" novalidate>
+      <div class="form-field">
+        <label id="modal-email-label" for="leadEmail">Email *</label>
+        <input type="email" id="leadEmail" required autocomplete="email" placeholder="tu@empresa.com">
+      </div>
+      <div class="form-field">
+        <label id="modal-company-label" for="leadCompany">Empresa</label>
+        <input type="text"  id="leadCompany" autocomplete="organization" placeholder="Nombre de tu empresa">
+      </div>
+      <div class="form-field">
+        <label id="modal-country-label" for="leadCountry">País</label>
+        <select id="leadCountry">
+          <option value="">—</option>
+          <option value="ES">España</option>
+          <option value="FR">France</option>
+          <option value="DE">Deutschland</option>
+          <option value="IT">Italia</option>
+          <option value="PT">Portugal</option>
+          <option value="GB">United Kingdom</option>
+          <option value="NL">Nederland</option>
+          <option value="BE">Belgique / België</option>
+          <option value="CH">Schweiz / Suisse</option>
+          <option value="OTHER">Otro / Other</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-modal-submit" id="modal-submit">↓ Descargar PDF</button>
+    </form>
+    <button class="modal-skip" id="modal-skip">Continuar sin registrarme</button>
+  </div>
+</div>
 
 <div id="loadingOverlay">
   <img src="logo.png" class="loading-logo" alt="EURAST">
@@ -386,10 +525,54 @@ const rendered = new Set();
 
 // ── UI STRINGS (multilingual) ──────────────────────────────────────
 const STRINGS = {
-  es: { navLabel: 'Grupos',  headerSub: 'Catálogo Tarifa RCR Completa',   download: '↓ Descargar PDF',     loading: '0%', loadingSub: 'La primera página aparecerá en unos segundos' },
-  en: { navLabel: 'Groups',  headerSub: 'RCR Complete Price List',         download: '↓ Download PDF',      loading: '0%', loadingSub: 'The first page will appear in a few seconds' },
-  fr: { navLabel: 'Groupes', headerSub: 'Catalogue Tarif RCR Complet',     download: '↓ Télécharger PDF',   loading: '0%', loadingSub: 'La première page apparaîtra dans quelques secondes' },
-  de: { navLabel: 'Gruppen', headerSub: 'RCR Vollständiger Preiskatalog',  download: '↓ PDF herunterladen', loading: '0%', loadingSub: 'Die erste Seite erscheint in wenigen Sekunden' },
+  es: {
+    navLabel: 'Grupos', headerSub: 'Catálogo Tarifa RCR Completa', download: '↓ Descargar PDF',
+    loading: '0%', loadingSub: 'La primera página aparecerá en unos segundos',
+    modal: {
+      title: 'Descarga el catálogo',
+      sub: 'Déjanos tu email y país para acceder al PDF completo',
+      emailLabel: 'Email *', emailPh: 'tu@empresa.com',
+      companyLabel: 'Empresa', companyPh: 'Nombre de tu empresa',
+      countryLabel: 'País', submit: '↓ Descargar PDF',
+      skip: 'Continuar sin registrarme', sending: 'Enviando...',
+    },
+  },
+  en: {
+    navLabel: 'Groups', headerSub: 'RCR Complete Price List', download: '↓ Download PDF',
+    loading: '0%', loadingSub: 'The first page will appear in a few seconds',
+    modal: {
+      title: 'Download the catalog',
+      sub: 'Leave your email and country to access the full PDF',
+      emailLabel: 'Email *', emailPh: 'you@company.com',
+      companyLabel: 'Company', companyPh: 'Your company name',
+      countryLabel: 'Country', submit: '↓ Download PDF',
+      skip: 'Continue without registering', sending: 'Sending...',
+    },
+  },
+  fr: {
+    navLabel: 'Groupes', headerSub: 'Catalogue Tarif RCR Complet', download: '↓ Télécharger PDF',
+    loading: '0%', loadingSub: 'La première page apparaîtra dans quelques secondes',
+    modal: {
+      title: 'Télécharger le catalogue',
+      sub: 'Laissez votre email et pays pour accéder au PDF complet',
+      emailLabel: 'Email *', emailPh: 'vous@entreprise.com',
+      companyLabel: 'Entreprise', companyPh: 'Nom de votre entreprise',
+      countryLabel: 'Pays', submit: '↓ Télécharger PDF',
+      skip: "Continuer sans m'enregistrer", sending: 'Envoi en cours...',
+    },
+  },
+  de: {
+    navLabel: 'Gruppen', headerSub: 'RCR Vollständiger Preiskatalog', download: '↓ PDF herunterladen',
+    loading: '0%', loadingSub: 'Die erste Seite erscheint in wenigen Sekunden',
+    modal: {
+      title: 'Katalog herunterladen',
+      sub: 'Hinterlassen Sie Ihre E-Mail und Ihr Land für den vollständigen PDF-Zugriff',
+      emailLabel: 'E-Mail *', emailPh: 'sie@unternehmen.de',
+      companyLabel: 'Unternehmen', companyPh: 'Name Ihres Unternehmens',
+      countryLabel: 'Land', submit: '↓ PDF herunterladen',
+      skip: 'Ohne Registrierung fortfahren', sending: 'Wird gesendet...',
+    },
+  },
 };
 let currentLang = 'es';
 
@@ -567,10 +750,113 @@ function setLang(lang) {
     const btn = document.getElementById(`nav-${g.id}`);
     if (btn) btn.querySelector('.nav-name').textContent = g[lang];
   });
+  updateModal(lang);
 }
 
 document.querySelectorAll('.lang-btn').forEach(btn =>
   btn.addEventListener('click', () => setLang(btn.dataset.lang)));
+
+// ── LEAD CAPTURE MODAL ─────────────────────────────────────────────
+const LEAD_WEBHOOK = 'https://hook.eu2.make.com/mwd601h4jm5tlgo2glc1aw4fkuyf2gs7';
+const LEAD_LS_KEY  = 'eurast_lead_submitted';
+
+function updateModal(lang) {
+  const m = STRINGS[lang].modal;
+  document.getElementById('modal-title').textContent         = m.title;
+  document.getElementById('modal-sub').textContent           = m.sub;
+  document.getElementById('modal-email-label').textContent   = m.emailLabel;
+  document.getElementById('leadEmail').placeholder           = m.emailPh;
+  document.getElementById('modal-company-label').textContent = m.companyLabel;
+  document.getElementById('leadCompany').placeholder         = m.companyPh;
+  document.getElementById('modal-country-label').textContent = m.countryLabel;
+  const submitBtn = document.getElementById('modal-submit');
+  if (!submitBtn.disabled) submitBtn.textContent             = m.submit;
+  document.getElementById('modal-skip').textContent          = m.skip;
+}
+
+function triggerDownload() {
+  const a    = document.createElement('a');
+  a.href     = 'cataleg.pdf';
+  a.download = 'Eurast-Cataleg-RCR.pdf';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function openModal() {
+  updateModal(currentLang);
+  document.getElementById('leadModal').hidden = false;
+  setTimeout(() => document.getElementById('leadEmail').focus(), 80);
+}
+
+function closeModal() {
+  document.getElementById('leadModal').hidden = true;
+  // Reset submit button in case it was disabled
+  const btn = document.getElementById('modal-submit');
+  btn.disabled    = false;
+  btn.textContent = STRINGS[currentLang].modal.submit;
+}
+
+async function submitLead(email, company, country) {
+  const btn = document.getElementById('modal-submit');
+  btn.disabled    = true;
+  btn.textContent = STRINGS[currentLang].modal.sending;
+
+  // Persist so returning visitors skip the modal
+  localStorage.setItem(LEAD_LS_KEY, email);
+
+  const sendPromise = fetch(LEAD_WEBHOOK, {
+    method:  'POST',
+    mode:    'no-cors',   // Make webhooks don't send CORS headers — response is opaque but data IS received
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email,
+      company,
+      country,
+      language: currentLang,
+      source:   'cataleg_download',
+    }),
+  }).catch(err => console.warn('Lead webhook error:', err));
+
+  // Wait max 3 s then download regardless
+  await Promise.race([sendPromise, new Promise(r => setTimeout(r, 3000))]);
+
+  closeModal();
+  triggerDownload();
+}
+
+// Intercept the download button
+document.getElementById('btn-dl').addEventListener('click', e => {
+  e.preventDefault();
+  if (localStorage.getItem(LEAD_LS_KEY)) {
+    triggerDownload(); // Returning visitor — skip modal
+    return;
+  }
+  openModal();
+});
+
+// Close modal on backdrop click
+document.getElementById('leadModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modal-skip').addEventListener('click', () => {
+  closeModal();
+  triggerDownload();
+});
+
+// Form submit
+document.getElementById('leadForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email   = document.getElementById('leadEmail').value.trim();
+  const company = document.getElementById('leadCompany').value.trim();
+  const country = document.getElementById('leadCountry').value;
+  if (!email || !email.includes('@')) {
+    document.getElementById('leadEmail').focus();
+    return;
+  }
+  await submitLead(email, company, country);
+});
 
 // ── RENDER INITIAL PAGES ───────────────────────────────────────────
 try {
@@ -672,6 +958,8 @@ window.addEventListener('resize', () => {
 
 // ── KEYBOARD ──────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeModal(); return; }
+  if (!document.getElementById('leadModal').hidden) return; // block nav when modal open
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(currentPage + 1);
   if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(currentPage - 1);
 });
