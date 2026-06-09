@@ -177,7 +177,7 @@
       overflow-y: auto;
       overflow-x: hidden;
       background: var(--surface);
-      padding: 20px 0;
+      padding: 0;
     }
     .viewer::-webkit-scrollbar { width: 7px; }
     .viewer::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -185,10 +185,10 @@
     /* Each page is a fixed-size placeholder; canvas fills it when rendered */
     .page-slot {
       display: block;
-      margin: 0 auto 16px;
+      margin: 0 auto 12px;
       background: #fff;
-      box-shadow: 0 2px 14px rgba(57,72,90,0.11), 0 0 0 1px rgba(0,0,0,0.05);
-      border-radius: 2px;
+      box-shadow: 0 2px 12px rgba(57,72,90,0.10), 0 0 0 1px rgba(0,0,0,0.04);
+      border-radius: 0;
       position: relative;
       /* width & height set by JS */
     }
@@ -315,7 +315,7 @@ const sampleVP    = samplePage.getViewport({ scale: 1 });
 const sampleRatio = sampleVP.height / sampleVP.width;
 
 function calcPageWidth() {
-  return viewer.clientWidth - 48; // 24px padding each side
+  return viewer.clientWidth; // full width
 }
 
 function buildSlots() {
