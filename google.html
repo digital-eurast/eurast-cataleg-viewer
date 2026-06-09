@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catàleg Tarifa — EURAST</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --primary: #ED692C;
+      --border:  #E2DCD9;
+      --grey-md: #A9A9AA;
+      --text:    #333436;
+    }
+    html, body { height: 100%; font-family: 'Montserrat', sans-serif; background: #FAF6F5; overflow: hidden; }
+
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 52px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 100;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-mark {
+      background: #111; color: #FFD700;
+      font-weight: 800; font-size: 12px;
+      letter-spacing: .08em;
+      padding: 4px 9px; border-radius: 5px;
+    }
+    .logo-label { font-size: 12px; font-weight: 500; color: var(--grey-md); }
+
+    .btn-dl {
+      background: var(--primary);
+      border: none; color: #fff;
+      padding: 7px 16px; border-radius: 7px;
+      font-size: 12px; font-family: inherit; font-weight: 600;
+      cursor: pointer; text-decoration: none;
+      transition: background .15s;
+    }
+    .btn-dl:hover { background: #d45a1e; }
+
+    iframe {
+      position: fixed;
+      top: 52px; left: 0; right: 0; bottom: 0;
+      width: 100%; height: calc(100% - 52px);
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <div class="logo-mark">EURAST</div>
+      <div class="logo-label">Catàleg Tarifa RCR Completa</div>
+    </div>
+    <a class="btn-dl" href="cataleg.pdf" download>↓ Descarregar PDF</a>
+  </header>
+
+  <iframe
+    src="https://docs.google.com/viewer?url=https://armanddal.github.io/eurast-cataleg-viewer/cataleg.pdf&embedded=true"
+    allowfullscreen>
+  </iframe>
+</body>
+</html>
