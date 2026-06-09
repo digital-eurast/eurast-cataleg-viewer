@@ -78,15 +78,16 @@
     }
     .ctrl-group button {
       background: none; border: none;
-      color: var(--grey-md);
+      color: var(--text);
       font-size: 17px; line-height: 1;
       padding: 2px 5px;
       border-radius: 4px;
       cursor: pointer;
       transition: all .1s;
       font-family: inherit;
+      font-weight: 600;
     }
-    .ctrl-group button:hover { background: var(--border); color: var(--text); }
+    .ctrl-group button:hover { background: var(--primary); color: #fff; }
     .ctrl-group button:disabled { opacity: .3; cursor: default; }
     .ctrl-group input {
       width: 42px;
@@ -508,7 +509,7 @@
     <button class="modal-close" id="modalClose" aria-label="Close">×</button>
     <img src="logo.png" class="modal-logo" alt="EURAST">
     <h2 class="modal-title" id="modal-title">Descarga el catálogo</h2>
-    <p class="modal-sub"  id="modal-sub">Déjanos tu email y país para acceder al PDF completo</p>
+    <p class="modal-sub"  id="modal-sub">Déjanos tu email para acceder al PDF completo</p>
     <form id="leadForm" novalidate>
       <div class="form-field">
         <label id="modal-email-label" for="leadEmail">Email *</label>
@@ -518,26 +519,10 @@
         <label id="modal-company-label" for="leadCompany">Empresa</label>
         <input type="text"  id="leadCompany" autocomplete="organization" placeholder="Nombre de tu empresa">
       </div>
-      <div class="form-field">
-        <label id="modal-country-label" for="leadCountry">País</label>
-        <select id="leadCountry">
-          <option value="">—</option>
-          <option value="ES">España</option>
-          <option value="FR">France</option>
-          <option value="DE">Deutschland</option>
-          <option value="IT">Italia</option>
-          <option value="PT">Portugal</option>
-          <option value="GB">United Kingdom</option>
-          <option value="NL">Nederland</option>
-          <option value="BE">Belgique / België</option>
-          <option value="CH">Schweiz / Suisse</option>
-          <option value="OTHER">Otro / Other</option>
-        </select>
-      </div>
       <div class="form-field form-privacy">
         <label class="privacy-label" for="leadPrivacy">
           <input type="checkbox" id="leadPrivacy" required>
-          <span id="modal-privacy-span">He leído y acepto la <a href="https://eurast.es/politica-privacidad" target="_blank" rel="noopener noreferrer">política de privacidad</a></span>
+          <span id="modal-privacy-span">He leído y acepto la <a href="https://eurast.com/es/apartado/5-politica-de-privacidad/" target="_blank" rel="noopener noreferrer">política de privacidad</a> y acepto recibir comunicaciones comerciales</span>
         </label>
       </div>
       <button type="submit" class="btn-modal-submit" id="modal-submit">↓ Descargar PDF</button>
@@ -615,11 +600,11 @@ const STRINGS = {
     loading: '0%', loadingSub: 'La primera página aparecerá en unos segundos',
     modal: {
       title: 'Descarga el catálogo',
-      sub: 'Déjanos tu email y país para acceder al PDF completo',
+      sub: 'Déjanos tu email para acceder al PDF completo',
       emailLabel: 'Email *', emailPh: 'tu@empresa.com',
       companyLabel: 'Empresa', companyPh: 'Nombre de tu empresa',
-      countryLabel: 'País', submit: '↓ Descargar PDF', sending: 'Enviando...',
-      privacyHtml: 'He leído y acepto la <a href="https://eurast.es/politica-privacidad" target="_blank" rel="noopener">política de privacidad</a>',
+      submit: '↓ Descargar PDF', sending: 'Enviando...',
+      privacyHtml: 'He leído y acepto la <a href="https://eurast.com/es/apartado/5-politica-de-privacidad/" target="_blank" rel="noopener">política de privacidad</a> y acepto recibir comunicaciones comerciales',
     },
   },
   en: {
@@ -627,11 +612,11 @@ const STRINGS = {
     loading: '0%', loadingSub: 'The first page will appear in a few seconds',
     modal: {
       title: 'Download the catalog',
-      sub: 'Leave your email and country to access the full PDF',
+      sub: 'Leave your email to access the full PDF',
       emailLabel: 'Email *', emailPh: 'you@company.com',
       companyLabel: 'Company', companyPh: 'Your company name',
-      countryLabel: 'Country', submit: '↓ Download PDF', sending: 'Sending...',
-      privacyHtml: 'I have read and accept the <a href="https://eurast.es/privacy-policy" target="_blank" rel="noopener">privacy policy</a>',
+      submit: '↓ Download PDF', sending: 'Sending...',
+      privacyHtml: 'I have read and accept the <a href="https://eurast.com/es/apartado/5-politica-de-privacidad/" target="_blank" rel="noopener">privacy policy</a> and agree to receive commercial communications',
     },
   },
   fr: {
@@ -639,11 +624,11 @@ const STRINGS = {
     loading: '0%', loadingSub: 'La première page apparaîtra dans quelques secondes',
     modal: {
       title: 'Télécharger le catalogue',
-      sub: 'Laissez votre email et pays pour accéder au PDF complet',
+      sub: 'Laissez votre email pour accéder au PDF complet',
       emailLabel: 'Email *', emailPh: 'vous@entreprise.com',
       companyLabel: 'Entreprise', companyPh: 'Nom de votre entreprise',
-      countryLabel: 'Pays', submit: '↓ Télécharger PDF', sending: 'Envoi en cours...',
-      privacyHtml: "J'ai lu et j'accepte la <a href=\"https://eurast.es/politique-confidentialite\" target=\"_blank\" rel=\"noopener\">politique de confidentialité</a>",
+      submit: '↓ Télécharger PDF', sending: 'Envoi en cours...',
+      privacyHtml: "J'ai lu et j'accepte la <a href=\"https://eurast.com/es/apartado/5-politica-de-privacidad/\" target=\"_blank\" rel=\"noopener\">politique de confidentialité</a> et j'accepte de recevoir des communications commerciales",
     },
   },
   de: {
@@ -651,11 +636,11 @@ const STRINGS = {
     loading: '0%', loadingSub: 'Die erste Seite erscheint in wenigen Sekunden',
     modal: {
       title: 'Katalog herunterladen',
-      sub: 'Hinterlassen Sie Ihre E-Mail und Ihr Land für den vollständigen PDF-Zugriff',
+      sub: 'Hinterlassen Sie Ihre E-Mail für den vollständigen PDF-Zugriff',
       emailLabel: 'E-Mail *', emailPh: 'sie@unternehmen.de',
       companyLabel: 'Unternehmen', companyPh: 'Name Ihres Unternehmens',
-      countryLabel: 'Land', submit: '↓ PDF herunterladen', sending: 'Wird gesendet...',
-      privacyHtml: 'Ich habe die <a href="https://eurast.es/datenschutz" target="_blank" rel="noopener">Datenschutzerklärung</a> gelesen und akzeptiere sie',
+      submit: '↓ PDF herunterladen', sending: 'Wird gesendet...',
+      privacyHtml: 'Ich habe die <a href="https://eurast.com/es/apartado/5-politica-de-privacidad/" target="_blank" rel="noopener">Datenschutzerklärung</a> gelesen, akzeptiere sie und stimme dem Erhalt von Werbemitteilungen zu',
     },
   },
   it: {
@@ -663,11 +648,11 @@ const STRINGS = {
     loading: '0%', loadingSub: 'La prima pagina apparirà tra pochi secondi',
     modal: {
       title: 'Scarica il catalogo',
-      sub: 'Lascia la tua email e paese per accedere al PDF completo',
+      sub: 'Lascia la tua email per accedere al PDF completo',
       emailLabel: 'Email *', emailPh: 'tu@azienda.com',
       companyLabel: 'Azienda', companyPh: 'Nome della tua azienda',
-      countryLabel: 'Paese', submit: '↓ Scarica PDF', sending: 'Invio in corso...',
-      privacyHtml: 'Ho letto e accetto la <a href="https://eurast.es/privacy" target="_blank" rel="noopener">informativa sulla privacy</a>',
+      submit: '↓ Scarica PDF', sending: 'Invio in corso...',
+      privacyHtml: 'Ho letto e accetto la <a href="https://eurast.com/es/apartado/5-politica-de-privacidad/" target="_blank" rel="noopener">informativa sulla privacy</a> e acconsento a ricevere comunicazioni commerciali',
     },
   },
   pt: {
@@ -675,11 +660,11 @@ const STRINGS = {
     loading: '0%', loadingSub: 'A primeira página aparecerá em poucos segundos',
     modal: {
       title: 'Descarregar o catálogo',
-      sub: 'Deixe o seu email e país para aceder ao PDF completo',
+      sub: 'Deixe o seu email para aceder ao PDF completo',
       emailLabel: 'Email *', emailPh: 'voce@empresa.com',
       companyLabel: 'Empresa', companyPh: 'Nome da sua empresa',
-      countryLabel: 'País', submit: '↓ Descarregar PDF', sending: 'A enviar...',
-      privacyHtml: 'Li e aceito a <a href="https://eurast.es/politica-privacidade" target="_blank" rel="noopener">política de privacidade</a>',
+      submit: '↓ Descarregar PDF', sending: 'A enviar...',
+      privacyHtml: 'Li e aceito a <a href="https://eurast.com/es/apartado/5-politica-de-privacidad/" target="_blank" rel="noopener">política de privacidade</a> e aceito receber comunicações comerciais',
     },
   },
 };
@@ -687,7 +672,7 @@ let currentLang = 'es';
 
 // ── GROUPS — multilingual, declared at top ─────────────────────────
 const GROUPS = [
-  { id: 'G01', page:   1, es: 'Máquinas Bar',       en: 'Bar Machines',             fr: 'Machines Bar',              de: 'Barmaschinen',         it: 'Macchine Bar',                  pt: 'Máquinas Bar' },
+  { id: 'G01', page:   2, es: 'Máquinas Bar',       en: 'Bar Machines',             fr: 'Machines Bar',              de: 'Barmaschinen',         it: 'Macchine Bar',                  pt: 'Máquinas Bar' },
   { id: 'G02', page:  47, es: 'Cocinas 450/550',     en: 'Cooking Ranges 450/550',   fr: 'Cuisinières 450/550',       de: 'Kochgeräte 450/550',   it: 'Cucine 450/550',                pt: 'Fogões 450/550' },
   { id: 'G03', page:  65, es: 'Cocinas 600',         en: 'Cooking Ranges 600',       fr: 'Cuisinières 600',           de: 'Kochgeräte 600',       it: 'Cucine 600',                    pt: 'Fogões 600' },
   { id: 'G04', page:  93, es: 'Cocinas 700',         en: 'Cooking Ranges 700',       fr: 'Cuisinières 700',           de: 'Kochgeräte 700',       it: 'Cucine 700',                    pt: 'Fogões 700' },
@@ -865,8 +850,9 @@ function setLang(lang) {
 document.getElementById('langSelect').addEventListener('change', e => setLang(e.target.value));
 
 // ── LEAD CAPTURE MODAL ─────────────────────────────────────────────
-const LEAD_WEBHOOK = 'https://hook.eu2.make.com/mwd601h4jm5tlgo2glc1aw4fkuyf2gs7';
-const LEAD_LS_KEY  = 'eurast_lead_submitted';
+const LEAD_WEBHOOK   = 'https://hook.eu2.make.com/mwd601h4jm5tlgo2glc1aw4fkuyf2gs7';
+const LEAD_LS_KEY    = 'eurast_lead_submitted';
+const LANG_TO_COUNTRY = { es: 'ES', en: 'INT', fr: 'FR', de: 'DE', it: 'IT', pt: 'PT' };
 
 function updateModal(lang) {
   const m = STRINGS[lang].modal;
@@ -876,7 +862,6 @@ function updateModal(lang) {
   document.getElementById('leadEmail').placeholder           = m.emailPh;
   document.getElementById('modal-company-label').textContent = m.companyLabel;
   document.getElementById('leadCompany').placeholder         = m.companyPh;
-  document.getElementById('modal-country-label').textContent = m.countryLabel;
   document.getElementById('modal-privacy-span').innerHTML    = m.privacyHtml;
   const submitBtn = document.getElementById('modal-submit');
   if (!submitBtn.disabled) submitBtn.textContent             = m.submit;
@@ -905,7 +890,8 @@ function closeModal() {
   btn.textContent = STRINGS[currentLang].modal.submit;
 }
 
-async function submitLead(email, company, country) {
+async function submitLead(email, company) {
+  const country = LANG_TO_COUNTRY[currentLang] || currentLang.toUpperCase();
   const btn = document.getElementById('modal-submit');
   btn.disabled    = true;
   btn.textContent = STRINGS[currentLang].modal.sending;
@@ -954,7 +940,6 @@ document.getElementById('leadForm').addEventListener('submit', async e => {
   e.preventDefault();
   const email   = document.getElementById('leadEmail').value.trim();
   const company = document.getElementById('leadCompany').value.trim();
-  const country = document.getElementById('leadCountry').value;
   const privacy = document.getElementById('leadPrivacy').checked;
 
   if (!email || !email.includes('@')) {
@@ -967,7 +952,7 @@ document.getElementById('leadForm').addEventListener('submit', async e => {
     setTimeout(() => { document.getElementById('leadPrivacy').style.outline = ''; }, 1500);
     return;
   }
-  await submitLead(email, company, country);
+  await submitLead(email, company);
 });
 
 // ── MOBILE SIDEBAR TOGGLE ──────────────────────────────────────────
