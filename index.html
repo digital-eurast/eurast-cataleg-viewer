@@ -14,196 +14,160 @@
       --primary-h: #d45a1e;
       --surface:   #FAF6F5;
       --text:      #333436;
-      --navy:      #39485A;
       --border:    #E2DCD9;
       --grey-lt:   #EBECED;
       --grey-md:   #A9A9AA;
     }
 
-    body {
+    html, body {
+      height: 100%;
       font-family: 'Montserrat', -apple-system, sans-serif;
       background: var(--surface);
       color: var(--text);
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
       overflow: hidden;
     }
 
     /* ── HEADER ── */
     header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 52px;
       background: #fff;
       border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      height: 56px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      flex-shrink: 0;
-      z-index: 100;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      padding: 0 20px;
+      z-index: 200;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
     }
 
     .logo {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      flex-shrink: 0;
     }
     .logo-mark {
       background: #111;
       color: #FFD700;
       font-weight: 800;
-      font-size: 13px;
+      font-size: 12px;
       letter-spacing: .08em;
-      padding: 5px 10px;
-      border-radius: 6px;
+      padding: 4px 9px;
+      border-radius: 5px;
     }
     .logo-label {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
       color: var(--grey-md);
-      letter-spacing: .02em;
     }
 
     .toolbar {
       display: flex;
       align-items: center;
-      gap: 8px;
-    }
-
-    .btn {
-      background: var(--grey-lt);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 7px 14px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-family: inherit;
-      font-weight: 500;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
       gap: 6px;
-      transition: all 0.15s;
-      text-decoration: none;
-      white-space: nowrap;
     }
-    .btn:hover { background: var(--border); }
+    .divider { width: 1px; height: 24px; background: var(--border); }
 
-    .btn-primary {
-      background: var(--primary);
-      border-color: var(--primary);
-      color: #fff;
-    }
-    .btn-primary:hover { background: var(--primary-h); border-color: var(--primary-h); }
-
-    .page-nav {
+    .ctrl-group {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       background: var(--grey-lt);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 4px 8px;
+      border-radius: 7px;
+      padding: 3px 7px;
     }
-    .page-nav button {
-      background: none;
-      border: none;
+    .ctrl-group button {
+      background: none; border: none;
       color: var(--grey-md);
-      cursor: pointer;
-      font-size: 18px;
-      line-height: 1;
-      padding: 2px 6px;
+      font-size: 17px; line-height: 1;
+      padding: 2px 5px;
       border-radius: 4px;
-      transition: all 0.1s;
+      cursor: pointer;
+      transition: all .1s;
+      font-family: inherit;
     }
-    .page-nav button:hover { background: var(--border); color: var(--text); }
-    .page-nav button:disabled { opacity: 0.35; cursor: default; }
-    .page-nav input {
-      width: 46px;
+    .ctrl-group button:hover { background: var(--border); color: var(--text); }
+    .ctrl-group button:disabled { opacity: .3; cursor: default; }
+    .ctrl-group input {
+      width: 42px;
       background: #fff;
       border: 1px solid var(--border);
       color: var(--text);
       text-align: center;
-      border-radius: 5px;
-      padding: 3px 4px;
-      font-size: 13px;
-      font-family: inherit;
-      font-weight: 600;
-    }
-    .page-nav span { font-size: 13px; color: var(--grey-md); font-weight: 500; }
-
-    .zoom-ctrl {
-      display: flex;
-      align-items: center;
-      gap: 2px;
-      background: var(--grey-lt);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 4px 8px;
-    }
-    .zoom-ctrl button {
-      background: none;
-      border: none;
-      color: var(--grey-md);
-      cursor: pointer;
-      font-size: 18px;
-      line-height: 1;
-      padding: 2px 7px;
       border-radius: 4px;
-      transition: all 0.1s;
-      font-family: inherit;
-    }
-    .zoom-ctrl button:hover { background: var(--border); color: var(--text); }
-    .zoom-ctrl span {
+      padding: 2px 3px;
       font-size: 12px;
-      color: var(--text);
+      font-family: inherit;
       font-weight: 600;
-      min-width: 38px;
-      text-align: center;
+    }
+    .ctrl-group span {
+      font-size: 12px;
+      color: var(--grey-md);
+      font-weight: 500;
     }
 
-    .divider { width: 1px; height: 28px; background: var(--border); }
+    .btn-dl {
+      background: var(--primary);
+      border: none;
+      color: #fff;
+      padding: 7px 14px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+    .btn-dl:hover { background: var(--primary-h); }
 
     /* ── LAYOUT ── */
-    .main { display: flex; flex: 1; overflow: hidden; }
+    .layout {
+      position: fixed;
+      top: 52px; left: 0; right: 0; bottom: 0;
+      display: flex;
+    }
 
     /* ── SIDEBAR ── */
     .sidebar {
-      width: 152px;
+      width: 120px;
+      flex-shrink: 0;
       background: #fff;
       border-right: 1px solid var(--border);
       overflow-y: auto;
-      flex-shrink: 0;
-      padding: 10px 8px;
+      overflow-x: hidden;
+      padding: 8px 6px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
     }
     .sidebar::-webkit-scrollbar { width: 3px; }
     .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
     .thumb {
       cursor: pointer;
-      border-radius: 5px;
+      border-radius: 4px;
       overflow: hidden;
       border: 2px solid transparent;
-      transition: border-color 0.15s;
+      transition: border-color .15s;
       position: relative;
       background: var(--grey-lt);
+      aspect-ratio: 210 / 297; /* A4 */
     }
     .thumb:hover { border-color: var(--grey-md); }
     .thumb.active { border-color: var(--primary); }
-    .thumb canvas { width: 100%; display: block; }
+    .thumb canvas { width: 100%; height: 100%; display: block; object-fit: contain; }
     .thumb-num {
       position: absolute;
-      bottom: 3px;
-      right: 4px;
-      font-size: 9px;
-      font-weight: 700;
-      color: rgba(51,52,54,0.7);
-      background: rgba(250,246,245,0.85);
-      padding: 1px 4px;
+      bottom: 2px; right: 3px;
+      font-size: 9px; font-weight: 700;
+      color: rgba(51,52,54,.75);
+      background: rgba(250,246,245,.9);
+      padding: 1px 3px;
       border-radius: 3px;
     }
 
@@ -211,26 +175,32 @@
     .viewer {
       flex: 1;
       overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 24px 20px;
-      gap: 16px;
+      overflow-x: hidden;
       background: var(--surface);
+      padding: 20px 0;
     }
-    .viewer::-webkit-scrollbar { width: 6px; }
-    .viewer::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .viewer::-webkit-scrollbar { width: 7px; }
+    .viewer::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-    .page-wrapper {
-      box-shadow: 0 2px 16px rgba(57,72,90,0.12), 0 0 0 1px rgba(0,0,0,0.06);
-      border-radius: 3px;
-      overflow: hidden;
+    /* Each page is a fixed-size placeholder; canvas fills it when rendered */
+    .page-slot {
+      display: block;
+      margin: 0 auto 16px;
       background: #fff;
+      box-shadow: 0 2px 14px rgba(57,72,90,0.11), 0 0 0 1px rgba(0,0,0,0.05);
+      border-radius: 2px;
+      position: relative;
+      /* width & height set by JS */
     }
-    .page-wrapper canvas { display: block; }
+    .page-slot canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
 
     /* ── LOADING ── */
-    .loading-overlay {
+    #loadingOverlay {
       position: fixed;
       inset: 0;
       background: var(--surface);
@@ -239,51 +209,39 @@
       align-items: center;
       justify-content: center;
       z-index: 999;
-      gap: 20px;
+      gap: 18px;
+      transition: opacity .4s;
     }
-    .loading-overlay.hidden { display: none; }
+    #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
 
     .logo-loading {
       background: #111;
       color: #FFD700;
       font-weight: 800;
-      font-size: 18px;
+      font-size: 17px;
       letter-spacing: .1em;
-      padding: 10px 20px;
-      border-radius: 10px;
-      margin-bottom: 8px;
+      padding: 9px 18px;
+      border-radius: 9px;
     }
-
     .spinner {
-      width: 36px;
-      height: 36px;
+      width: 34px; height: 34px;
       border: 3px solid var(--border);
       border-top-color: var(--primary);
       border-radius: 50%;
-      animation: spin 0.75s linear infinite;
+      animation: spin .75s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    .loading-progress {
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--primary);
-    }
-    .loading-text {
-      font-size: 13px;
-      color: var(--grey-md);
-      font-weight: 500;
-    }
+    .loading-pct { font-size: 21px; font-weight: 700; color: var(--primary); }
+    .loading-sub { font-size: 12px; color: var(--grey-md); font-weight: 500; }
   </style>
 </head>
 <body>
 
-<!-- LOADING -->
-<div class="loading-overlay" id="loadingOverlay">
+<div id="loadingOverlay">
   <div class="logo-loading">EURAST</div>
   <div class="spinner"></div>
-  <div class="loading-progress" id="loadingProgress">Carregant...</div>
-  <div class="loading-text">La primera pàgina apareixerà en uns segons</div>
+  <div class="loading-pct" id="pct">Carregant…</div>
+  <div class="loading-sub">La primera pàgina apareixerà en uns segons</div>
 </div>
 
 <header>
@@ -291,218 +249,263 @@
     <div class="logo-mark">EURAST</div>
     <div class="logo-label">Catàleg Tarifa RCR Completa</div>
   </div>
-
   <div class="toolbar">
-    <div class="page-nav">
-      <button id="prevPage" title="Pàgina anterior" disabled>‹</button>
-      <input type="number" id="pageInput" value="1" min="1">
-      <span>/ <span id="totalPages">—</span></span>
-      <button id="nextPage" title="Pàgina següent">›</button>
+    <div class="ctrl-group">
+      <button id="btnPrev" disabled>‹</button>
+      <input id="pageInput" type="number" value="1" min="1">
+      <span>/ <span id="totalLbl">—</span></span>
+      <button id="btnNext">›</button>
     </div>
-
     <div class="divider"></div>
-
-    <div class="zoom-ctrl">
-      <button id="zoomOut" title="Reduir">−</button>
-      <span id="zoomLabel">100%</span>
-      <button id="zoomIn" title="Ampliar">+</button>
+    <div class="ctrl-group">
+      <button id="btnZoomOut">−</button>
+      <span id="zoomLbl">100%</span>
+      <button id="btnZoomIn">+</button>
     </div>
-
     <div class="divider"></div>
-
-    <a href="cataleg.pdf" download class="btn btn-primary">
-      ↓ Descarregar PDF
-    </a>
+    <a class="btn-dl" href="cataleg.pdf" download>↓ Descarregar PDF</a>
   </div>
 </header>
 
-<div class="main">
+<div class="layout">
   <div class="sidebar" id="sidebar"></div>
-  <div class="viewer" id="viewer"></div>
+  <div class="viewer"  id="viewer"></div>
 </div>
 
 <script type="module">
-  import * as pdfjsLib from 'https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.min.mjs';
+import * as pdfjsLib from 'https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
 
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+// ── STATE ──────────────────────────────────────────────────────────
+const PRERENDER  = 2;   // pages to pre-render around viewport
+const UNLOAD_FAR = 8;   // unload pages farther than this
+const THUMB_SCALE = 0.15;
 
-  const PDF_URL = 'cataleg.pdf';
-  const THUMB_SCALE = 0.18;
+const viewer  = document.getElementById('viewer');
+const sidebar = document.getElementById('sidebar');
 
-  let pdfDoc = null;
-  let currentPage = 1;
-  let zoom = 1.0;
-  let renderingPage = false;
-  const renderedThumbs = new Set();
+let pdf, totalPages, zoom = 1.0, currentPage = 1;
+const slots      = [];   // DOM wrappers, index = pageNum-1
+const rendered   = new Set();
+const thumbDone  = new Set();
 
-  const viewer   = document.getElementById('viewer');
-  const sidebar  = document.getElementById('sidebar');
-  const overlay  = document.getElementById('loadingOverlay');
-  const progress = document.getElementById('loadingProgress');
+// ── LOAD ───────────────────────────────────────────────────────────
+const task = pdfjsLib.getDocument({ url: 'cataleg.pdf', rangeChunkSize: 65536 });
+task.onProgress = ({ loaded, total }) => {
+  if (total) document.getElementById('pct').textContent =
+    Math.round(loaded / total * 100) + '%';
+};
+pdf = await task.promise;
+totalPages = pdf.numPages;
 
-  // ── LOAD PDF ──
-  const task = pdfjsLib.getDocument({ url: PDF_URL, rangeChunkSize: 65536 });
-  task.onProgress = ({ loaded, total }) => {
-    if (total) progress.textContent = Math.round((loaded / total) * 100) + '%';
-  };
+document.getElementById('totalLbl').textContent = totalPages;
+document.getElementById('pageInput').max = totalPages;
+document.getElementById('btnNext').disabled = totalPages <= 1;
 
-  pdfDoc = await task.promise;
+// Hide loading
+const overlay = document.getElementById('loadingOverlay');
+overlay.classList.add('hidden');
+setTimeout(() => overlay.remove(), 500);
 
-  const total = pdfDoc.numPages;
-  document.getElementById('totalPages').textContent = total;
-  document.getElementById('pageInput').max = total;
-  document.getElementById('prevPage').disabled = true;
-  document.getElementById('nextPage').disabled = total <= 1;
+// ── BUILD PLACEHOLDERS ─────────────────────────────────────────────
+// Get a reference viewport to know page dimensions (most pages are the same size)
+const samplePage  = await pdf.getPage(1);
+const sampleVP    = samplePage.getViewport({ scale: 1 });
+const sampleRatio = sampleVP.height / sampleVP.width;
 
-  overlay.classList.add('hidden');
+function calcPageWidth() {
+  return viewer.clientWidth - 48; // 24px padding each side
+}
 
-  await renderPage(1);
-  buildSidebar(total);
-  renderAllPages(total);
+function buildSlots() {
+  const w = calcPageWidth();
+  viewer.innerHTML = '';
+  slots.length = 0;
+  rendered.clear();
 
-  // ── RENDER ──
-  async function renderPage(num) {
-    if (renderingPage) return;
-    renderingPage = true;
+  for (let i = 1; i <= totalPages; i++) {
+    const h = Math.round(w * sampleRatio);
+    const slot = document.createElement('div');
+    slot.className  = 'page-slot';
+    slot.id         = `p${i}`;
+    slot.dataset.page = i;
+    slot.style.width  = w + 'px';
+    slot.style.height = h + 'px';
+    viewer.appendChild(slot);
+    slots.push(slot);
+  }
+}
 
-    const page = await pdfDoc.getPage(num);
-    const viewport = page.getViewport({ scale: zoom * autoScale(page) });
+buildSlots();
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'page-wrapper';
-    wrapper.id = `page-${num}`;
-    wrapper.dataset.page = num;
+// ── RENDER PAGE INTO SLOT ──────────────────────────────────────────
+const renderQueue = new Map(); // pageNum → Promise
+
+async function renderSlot(num) {
+  if (rendered.has(num)) return;
+  if (renderQueue.has(num)) return renderQueue.get(num);
+
+  const promise = (async () => {
+    const slot = slots[num - 1];
+    if (!slot) return;
+
+    const page = await pdf.getPage(num);
+    const scale = (zoom * calcPageWidth()) / page.getViewport({ scale: 1 }).width;
+    const vp    = page.getViewport({ scale });
+
+    // Resize slot to exact page dimensions
+    slot.style.width  = vp.width  + 'px';
+    slot.style.height = vp.height + 'px';
 
     const canvas = document.createElement('canvas');
-    canvas.width  = viewport.width;
-    canvas.height = viewport.height;
-    canvas.style.width = viewport.width + 'px';
-
-    wrapper.appendChild(canvas);
-    viewer.appendChild(wrapper);
-
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-    renderingPage = false;
-  }
-
-  async function renderAllPages(n) {
-    for (let i = 2; i <= n; i++) {
-      if (document.getElementById(`page-${i}`)) continue;
-      await renderPage(i);
-      await new Promise(r => setTimeout(r, 0));
-    }
-  }
-
-  function autoScale(page) {
-    const vw = viewer.clientWidth - 60;
-    return Math.min(vw / page.getViewport({ scale: 1 }).width, 1.8);
-  }
-
-  // ── SIDEBAR ──
-  function buildSidebar(n) {
-    for (let i = 1; i <= n; i++) {
-      const thumb = document.createElement('div');
-      thumb.className = 'thumb' + (i === 1 ? ' active' : '');
-      thumb.id = `thumb-${i}`;
-      thumb.dataset.page = i;
-
-      const canvas = document.createElement('canvas');
-      const num = document.createElement('div');
-      num.className = 'thumb-num';
-      num.textContent = i;
-
-      thumb.append(canvas, num);
-      sidebar.appendChild(thumb);
-      thumb.addEventListener('click', () => goToPage(i));
-    }
-
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (!e.isIntersecting) return;
-        const n = parseInt(e.target.dataset.page);
-        if (renderedThumbs.has(n)) return;
-        renderedThumbs.add(n);
-        renderThumb(n, e.target.querySelector('canvas'));
-      });
-    }, { root: sidebar, rootMargin: '300px' });
-
-    document.querySelectorAll('.thumb').forEach(t => obs.observe(t));
-  }
-
-  async function renderThumb(num, canvas) {
-    const page = await pdfDoc.getPage(num);
-    const vp = page.getViewport({ scale: THUMB_SCALE });
     canvas.width  = vp.width;
     canvas.height = vp.height;
+    slot.appendChild(canvas);
+
     await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
-  }
+    rendered.add(num);
+  })();
 
-  // ── NAVIGATION ──
-  function goToPage(num) {
-    if (num < 1 || num > pdfDoc.numPages) return;
-    currentPage = num;
+  renderQueue.set(num, promise);
+  await promise;
+  renderQueue.delete(num);
+}
 
-    document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
-    const thumb = document.getElementById(`thumb-${num}`);
-    if (thumb) { thumb.classList.add('active'); thumb.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+function unloadSlot(num) {
+  if (!rendered.has(num)) return;
+  const slot = slots[num - 1];
+  if (!slot) return;
+  slot.innerHTML = '';
+  rendered.delete(num);
+}
 
-    const pageEl = document.getElementById(`page-${num}`);
-    if (pageEl) pageEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    document.getElementById('pageInput').value = num;
-    document.getElementById('prevPage').disabled = num <= 1;
-    document.getElementById('nextPage').disabled = num >= pdfDoc.numPages;
-  }
-
-  // Auto-update counter on scroll
-  const scrollObs = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (!e.isIntersecting || e.intersectionRatio < 0.5) return;
-      const n = parseInt(e.target.dataset.page);
+// ── VIRTUAL SCROLL OBSERVER ────────────────────────────────────────
+const pageObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    const n = parseInt(e.target.dataset.page);
+    if (e.isIntersecting) {
       currentPage = n;
-      document.getElementById('pageInput').value = n;
-      document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
-      const th = document.getElementById(`thumb-${n}`);
-      if (th) th.classList.add('active');
-      document.getElementById('prevPage').disabled = n <= 1;
-      document.getElementById('nextPage').disabled = n >= pdfDoc.numPages;
-    });
-  }, { root: viewer, threshold: 0.5 });
-
-  new MutationObserver(muts => {
-    muts.forEach(m => m.addedNodes.forEach(node => {
-      if (node.dataset?.page) scrollObs.observe(node);
-    }));
-  }).observe(viewer, { childList: true });
-
-  // ── CONTROLS ──
-  document.getElementById('prevPage').addEventListener('click', () => goToPage(currentPage - 1));
-  document.getElementById('nextPage').addEventListener('click', () => goToPage(currentPage + 1));
-  document.getElementById('pageInput').addEventListener('change', e => goToPage(parseInt(e.target.value)));
-
-  document.getElementById('zoomIn').addEventListener('click', () => {
-    zoom = Math.min(zoom + 0.25, 3.0);
-    document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
-    rebuildViewer();
+      updateNav(n);
+      // Render this page + neighbours
+      for (let i = Math.max(1, n - PRERENDER); i <= Math.min(totalPages, n + PRERENDER); i++) {
+        renderSlot(i);
+      }
+      // Unload far pages
+      rendered.forEach(r => {
+        if (Math.abs(r - n) > UNLOAD_FAR) unloadSlot(r);
+      });
+    }
   });
-  document.getElementById('zoomOut').addEventListener('click', () => {
-    zoom = Math.max(zoom - 0.25, 0.5);
-    document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
-    rebuildViewer();
-  });
+}, { root: viewer, threshold: 0.1 });
 
-  async function rebuildViewer() {
-    viewer.innerHTML = '';
-    renderingPage = false;
-    await renderPage(currentPage);
-    renderAllPages(pdfDoc.numPages);
+slots.forEach(s => pageObs.observe(s));
+
+// Render first page immediately
+await renderSlot(1);
+renderSlot(2);
+
+// ── SIDEBAR THUMBNAILS ─────────────────────────────────────────────
+for (let i = 1; i <= totalPages; i++) {
+  const thumb = document.createElement('div');
+  thumb.className   = 'thumb' + (i === 1 ? ' active' : '');
+  thumb.id          = `th${i}`;
+  thumb.dataset.page = i;
+  const canvas = document.createElement('canvas');
+  const num    = document.createElement('div');
+  num.className = 'thumb-num';
+  num.textContent = i;
+  thumb.append(canvas, num);
+  sidebar.appendChild(thumb);
+  thumb.addEventListener('click', () => goTo(i));
+}
+
+const thumbObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const n = parseInt(e.target.dataset.page);
+    if (thumbDone.has(n)) return;
+    thumbDone.add(n);
+    (async () => {
+      const page = await pdf.getPage(n);
+      const vp   = page.getViewport({ scale: THUMB_SCALE });
+      const c    = e.target.querySelector('canvas');
+      c.width = vp.width; c.height = vp.height;
+      await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+    })();
+  });
+}, { root: sidebar, rootMargin: '400px' });
+
+document.querySelectorAll('.thumb').forEach(t => thumbObs.observe(t));
+
+// ── NAVIGATION ─────────────────────────────────────────────────────
+function updateNav(n) {
+  document.getElementById('pageInput').value = n;
+  document.getElementById('btnPrev').disabled = n <= 1;
+  document.getElementById('btnNext').disabled = n >= totalPages;
+  document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+  const th = document.getElementById(`th${n}`);
+  if (th) { th.classList.add('active'); th.scrollIntoView({ block: 'nearest' }); }
+}
+
+function goTo(n) {
+  n = Math.max(1, Math.min(totalPages, n));
+  slots[n - 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+document.getElementById('btnPrev').addEventListener('click', () => goTo(currentPage - 1));
+document.getElementById('btnNext').addEventListener('click', () => goTo(currentPage + 1));
+document.getElementById('pageInput').addEventListener('change', e => goTo(parseInt(e.target.value) || 1));
+
+// ── ZOOM ───────────────────────────────────────────────────────────
+function applyZoom() {
+  document.getElementById('zoomLbl').textContent = Math.round(zoom * 100) + '%';
+  // Recalculate slot sizes and re-render visible pages
+  const w = calcPageWidth() * zoom;
+  slots.forEach(s => {
+    s.style.width  = w + 'px';
+    s.style.height = Math.round(w * sampleRatio) + 'px';
+  });
+  rendered.clear();
+  slots.forEach(s => { s.innerHTML = ''; });
+  renderSlot(currentPage);
+  for (let i = Math.max(1, currentPage - PRERENDER); i <= Math.min(totalPages, currentPage + PRERENDER); i++) {
+    renderSlot(i);
   }
+}
 
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goToPage(currentPage + 1);
-    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goToPage(currentPage - 1);
-  });
+document.getElementById('btnZoomIn').addEventListener('click', () => {
+  zoom = Math.min(zoom + 0.25, 3.0);
+  applyZoom();
+});
+document.getElementById('btnZoomOut').addEventListener('click', () => {
+  zoom = Math.max(zoom - 0.25, 0.5);
+  applyZoom();
+});
+
+// ── RESIZE ────────────────────────────────────────────────────────
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    rendered.clear();
+    slots.forEach(s => { s.innerHTML = ''; });
+    const w = calcPageWidth();
+    slots.forEach(s => {
+      s.style.width  = w + 'px';
+      s.style.height = Math.round(w * sampleRatio) + 'px';
+    });
+    for (let i = Math.max(1, currentPage - PRERENDER); i <= Math.min(totalPages, currentPage + PRERENDER); i++) {
+      renderSlot(i);
+    }
+  }, 200);
+});
+
+// ── KEYBOARD ──────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(currentPage + 1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(currentPage - 1);
+});
 </script>
 </body>
 </html>
