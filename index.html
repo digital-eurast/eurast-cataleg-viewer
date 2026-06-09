@@ -410,7 +410,7 @@ async function renderSlot(num) {
     if (!slot) return;
 
     const page = await pdf.getPage(num);
-    const scale = (zoom * calcPageWidth()) / page.getViewport({ scale: 1 }).width;
+    const scale = calcPageWidth() / page.getViewport({ scale: 1 }).width; // zoom already inside calcPageWidth
     const vp    = page.getViewport({ scale });
 
     // Resize slot to exact page dimensions
