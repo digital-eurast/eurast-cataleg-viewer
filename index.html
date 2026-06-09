@@ -346,11 +346,12 @@ const sampleVP    = samplePage.getViewport({ scale: 1 });
 const sampleRatio = sampleVP.height / sampleVP.width;
 
 function calcPageWidth() {
-  // Fit the page so its full height is visible on screen (like Acrobat "Fit Page")
-  // Cap at viewer width so it never overflows horizontally
-  const viewerH  = viewer.clientHeight - 32;
-  const fitByH   = viewerH / sampleRatio;
-  const maxW     = viewer.clientWidth - 8;
+  // Use window dimensions as reliable fallback (clientWidth/Height can be 0 during init)
+  const vW = viewer.clientWidth  || (window.innerWidth  - 190);
+  const vH = viewer.clientHeight || (window.innerHeight - 52);
+  if (vW < 10) return 800;
+  const fitByH = Math.max(vH - 24, 100) / sampleRatio;
+  const maxW   = vW - 8;
   return Math.min(fitByH, maxW) * zoom;
 }
 
@@ -373,6 +374,9 @@ function buildSlots() {
   }
 }
 
+// Wait 2 animation frames so the browser has calculated layout dimensions
+await new Promise(r => requestAnimationFrame(r));
+await new Promise(r => requestAnimationFrame(r));
 buildSlots();
 
 // ── RENDER PAGE INTO SLOT ──────────────────────────────────────────
@@ -437,17 +441,11 @@ const pageObs = new IntersectionObserver(entries => {
 }, { root: viewer, threshold: 0.3 });
 
 slots.forEach(s => pageObs.observe(s));
-
-// Render first pages immediately, then enable observer
 viewer.scrollTop = 0;
-await renderSlot(1);
-renderSlot(2);
 updateNav(1);
 
-// Small delay so all initial IntersectionObserver callbacks fire & get ignored
-setTimeout(() => { observerReady = true; }, 300);
-
 // ── SIDEBAR — NAVEGACIÓ PER GRUPS ─────────────────────────────────
+// Build groups FIRST (sync, always works)
 const GROUPS = [
   { id: 'G01', page:   1, name: 'Màquines Bar' },
   { id: 'G02', page:  47, name: 'Cocinas 450/550' },
@@ -475,6 +473,15 @@ GROUPS.forEach((g, idx) => {
   btn.addEventListener('click', () => goTo(g.page));
   sidebar.appendChild(btn);
 });
+
+// Now render first pages (after groups are built, so UI is always usable)
+try {
+  await renderSlot(1);
+} catch(e) { console.warn('renderSlot 1:', e); }
+renderSlot(2).catch(() => {});
+
+// Enable scroll observer after a short delay
+setTimeout(() => { observerReady = true; }, 300);
 
 function updateActiveGroup(pageNum) {
   // Find the group this page belongs to
@@ -511,8 +518,7 @@ document.getElementById('pageInput').addEventListener('change', e => goTo(parseI
 // ── ZOOM ───────────────────────────────────────────────────────────
 function applyZoom() {
   document.getElementById('zoomLbl').textContent = Math.round(zoom * 100) + '%';
-  // Recalculate slot sizes and re-render visible pages
-  const w = calcPageWidth() * zoom;
+  const w = calcPageWidth(); // zoom already included inside calcPageWidth
   slots.forEach(s => {
     s.style.width  = w + 'px';
     s.style.height = Math.round(w * sampleRatio) + 'px';
