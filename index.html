@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ca">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Catàleg Tarifa — EURAST</title>
+  <title>Catálogo Tarifa — EURAST</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -37,7 +37,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 20px;
+      padding: 0 16px;
       z-index: 200;
       box-shadow: 0 1px 6px rgba(0,0,0,0.07);
     }
@@ -45,22 +45,19 @@
     .logo {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       flex-shrink: 0;
     }
-    .logo-mark {
-      background: #111;
-      color: #FFD700;
-      font-weight: 800;
-      font-size: 12px;
-      letter-spacing: .08em;
-      padding: 4px 9px;
-      border-radius: 5px;
+    .logo-img {
+      height: 36px;
+      width: auto;
+      display: block;
     }
     .logo-label {
       font-size: 12px;
       font-weight: 500;
       color: var(--grey-md);
+      white-space: nowrap;
     }
 
     .toolbar {
@@ -132,9 +129,9 @@
       display: flex;
     }
 
-    /* ── SIDEBAR / GROUP NAV ── */
+    /* ── SIDEBAR ── */
     .sidebar {
-      width: 215px;
+      width: 210px;
       flex-shrink: 0;
       background: #fff;
       border-right: 1px solid var(--border);
@@ -147,6 +144,31 @@
     }
     .sidebar::-webkit-scrollbar { width: 3px; }
     .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── LANGUAGE TABS ── */
+    .lang-tabs {
+      display: flex;
+      gap: 3px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 6px;
+    }
+    .lang-btn {
+      flex: 1;
+      padding: 5px 0;
+      border: 1px solid var(--border);
+      background: none;
+      border-radius: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      color: var(--grey-md);
+      cursor: pointer;
+      transition: all .12s;
+      font-family: inherit;
+    }
+    .lang-btn:hover { background: var(--grey-lt); color: var(--text); }
+    .lang-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
     .nav-label {
       font-size: 9px;
@@ -173,10 +195,9 @@
       width: 100%;
     }
     .nav-item:hover { background: var(--grey-lt); }
-    .nav-item.active {
-      background: rgba(237,105,44,.10);
-    }
+    .nav-item.active { background: rgba(237,105,44,.10); }
     .nav-item.active .nav-badge { background: var(--primary); color: #fff; }
+    .nav-item.active .nav-name { color: var(--primary); font-weight: 700; }
 
     .nav-badge {
       flex-shrink: 0;
@@ -192,29 +213,12 @@
       transition: background .12s, color .12s;
     }
     .nav-name {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
-    .nav-name-main {
       font-size: 11px;
       font-weight: 500;
       color: var(--text);
-      line-height: 1.2;
+      line-height: 1.3;
       transition: color .12s;
     }
-    .nav-name-langs {
-      font-size: 8.5px;
-      font-weight: 400;
-      color: var(--grey-md);
-      line-height: 1.2;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .nav-item.active .nav-name-main { color: var(--primary); font-weight: 700; }
-    .nav-item.active .nav-name-langs { color: rgba(237,105,44,.6); }
 
     /* ── VIEWER ── */
     .viewer {
@@ -222,20 +226,16 @@
       overflow-y: auto;
       overflow-x: hidden;
       background: var(--surface);
-      padding: 0;
     }
     .viewer::-webkit-scrollbar { width: 7px; }
     .viewer::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
-    /* Each page is a fixed-size placeholder; canvas fills it when rendered */
     .page-slot {
       display: block;
       margin: 0 auto 12px;
       background: #fff;
       box-shadow: 0 2px 12px rgba(57,72,90,0.10), 0 0 0 1px rgba(0,0,0,0.04);
-      border-radius: 0;
       position: relative;
-      /* width & height set by JS */
     }
     .page-slot canvas {
       position: absolute;
@@ -256,19 +256,18 @@
       gap: 14px;
       pointer-events: none;
     }
-    .page-loader-mark {
-      background: #111;
-      color: #FFD700;
-      font-weight: 800;
-      font-size: 14px;
-      letter-spacing: .12em;
-      padding: 6px 14px;
-      border-radius: 6px;
-      animation: plsPulse 1.8s ease-in-out infinite;
+    .page-loader-logo {
+      height: 40px;
+      width: auto;
+      opacity: 0;
+      animation: plsFadeIn .6s ease forwards, plsPulse 2s ease-in-out 0.6s infinite;
+    }
+    @keyframes plsFadeIn {
+      to { opacity: .7; }
     }
     @keyframes plsPulse {
-      0%, 100% { opacity: .35; }
-      50%       { opacity: 1; }
+      0%, 100% { opacity: .4; }
+      50%       { opacity: .9; }
     }
     .page-loader-bar {
       width: 64px;
@@ -293,7 +292,7 @@
       100% { transform: translateX(64px); }
     }
 
-    /* ── LOADING ── */
+    /* ── FULL-SCREEN LOADING OVERLAY ── */
     #loadingOverlay {
       position: fixed;
       inset: 0;
@@ -303,19 +302,14 @@
       align-items: center;
       justify-content: center;
       z-index: 999;
-      gap: 18px;
+      gap: 20px;
       transition: opacity .4s;
     }
     #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
 
-    .logo-loading {
-      background: #111;
-      color: #FFD700;
-      font-weight: 800;
-      font-size: 17px;
-      letter-spacing: .1em;
-      padding: 9px 18px;
-      border-radius: 9px;
+    .loading-logo {
+      height: 64px;
+      width: auto;
     }
     .spinner {
       width: 34px; height: 34px;
@@ -332,16 +326,16 @@
 <body>
 
 <div id="loadingOverlay">
-  <div class="logo-loading">EURAST</div>
+  <img src="logo.png" class="loading-logo" alt="EURAST">
   <div class="spinner"></div>
-  <div class="loading-pct" id="pct">Carregant…</div>
-  <div class="loading-sub">La primera pàgina apareixerà en uns segons</div>
+  <div class="loading-pct" id="pct">0%</div>
+  <div class="loading-sub" id="loading-sub">La primera página aparecerá en unos segundos</div>
 </div>
 
 <header>
   <div class="logo">
-    <div class="logo-mark">EURAST</div>
-    <div class="logo-label">Catàleg Tarifa RCR Completa</div>
+    <img src="logo.png" class="logo-img" alt="EURAST">
+    <div class="logo-label" id="header-label">Catálogo Tarifa RCR Completa</div>
   </div>
   <div class="toolbar">
     <div class="ctrl-group">
@@ -357,15 +351,21 @@
       <button id="btnZoomIn">+</button>
     </div>
     <div class="divider"></div>
-    <a class="btn-dl" href="cataleg.pdf" download>↓ Descarregar PDF</a>
+    <a class="btn-dl" id="btn-dl" href="cataleg.pdf" download>↓ Descargar PDF</a>
   </div>
 </header>
 
 <div class="layout">
   <div class="sidebar" id="sidebar">
-    <div class="nav-label">Grups</div>
+    <div class="lang-tabs">
+      <button class="lang-btn active" data-lang="es">ES</button>
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="fr">FR</button>
+      <button class="lang-btn" data-lang="de">DE</button>
+    </div>
+    <div class="nav-label" id="nav-label">Grupos</div>
   </div>
-  <div class="viewer"  id="viewer"></div>
+  <div class="viewer" id="viewer"></div>
 </div>
 
 <script type="module">
@@ -374,38 +374,46 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
 
 // ── STATE ──────────────────────────────────────────────────────────
-const PRERENDER  = 2;   // pages to pre-render around viewport
-const UNLOAD_FAR = 8;   // unload pages farther than this
-const THUMB_SCALE = 0.15;
+const PRERENDER  = 2;
+const UNLOAD_FAR = 8;
 
 const viewer  = document.getElementById('viewer');
 const sidebar = document.getElementById('sidebar');
 
 let pdf, totalPages, zoom = 1.0, currentPage = 1;
-const slots   = [];
+const slots    = [];
 const rendered = new Set();
 
-// ── GROUPS — declared at top so updateActiveGroup can use it ───────
+// ── UI STRINGS (multilingual) ──────────────────────────────────────
+const STRINGS = {
+  es: { navLabel: 'Grupos',  headerSub: 'Catálogo Tarifa RCR Completa',   download: '↓ Descargar PDF',     loading: '0%', loadingSub: 'La primera página aparecerá en unos segundos' },
+  en: { navLabel: 'Groups',  headerSub: 'RCR Complete Price List',         download: '↓ Download PDF',      loading: '0%', loadingSub: 'The first page will appear in a few seconds' },
+  fr: { navLabel: 'Groupes', headerSub: 'Catalogue Tarif RCR Complet',     download: '↓ Télécharger PDF',   loading: '0%', loadingSub: 'La première page apparaîtra dans quelques secondes' },
+  de: { navLabel: 'Gruppen', headerSub: 'RCR Vollständiger Preiskatalog',  download: '↓ PDF herunterladen', loading: '0%', loadingSub: 'Die erste Seite erscheint in wenigen Sekunden' },
+};
+let currentLang = 'es';
+
+// ── GROUPS — multilingual, declared at top ─────────────────────────
 const GROUPS = [
-  { id: 'G01', page:   1, name: 'Máquinas Bar',       langs: 'Bar Machines · Machines Bar · Barmaschinen' },
-  { id: 'G02', page:  47, name: 'Cocinas 450/550',     langs: 'Cooking Ranges · Cuisinières 450/550 · Kochgeräte 450/550' },
-  { id: 'G03', page:  65, name: 'Cocinas 600',         langs: 'Cooking Ranges 600 · Cuisinières 600 · Kochgeräte 600' },
-  { id: 'G04', page:  93, name: 'Cocinas 700',         langs: 'Cooking Ranges 700 · Cuisinières 700 · Kochgeräte 700' },
-  { id: 'G05', page: 151, name: 'Cocinas 900',         langs: 'Cooking Ranges 900 · Cuisinières 900 · Kochgeräte 900' },
-  { id: 'G06', page: 207, name: 'Gran Producción',     langs: 'Large Scale · Grande Production · Großproduktion' },
-  { id: 'G07', page: 248, name: 'Equipos Calientes',   langs: 'Hot Equipment · Équip. Chauds · Heißgeräte' },
-  { id: 'G08', page: 286, name: 'Hornos / Ovens',      langs: 'Ovens · Fours · Öfen' },
-  { id: 'G09', page: 342, name: 'Asadores & BBQ',      langs: 'Grills & BBQ · Rôtissoires BBQ · Grills & BBQ' },
-  { id: 'G10', page: 391, name: 'Campanas',            langs: 'Hoods · Hottes · Dunstabzugshauben' },
-  { id: 'G11', page: 425, name: 'Frío Industrial',     langs: 'Industrial Refrigeration · Réfrigération · Industriekühlung' },
-  { id: 'G12', page: 498, name: 'Vitrinas',            langs: 'Display Cases · Vitrines réfrigérées · Vitrinen' },
-  { id: 'G13', page: 590, name: 'Lavado / Washing',    langs: 'Washing · Lavage · Spülgeräte' },
-  { id: 'G14', page: 662, name: 'Elementos Neutros',   langs: 'Neutral Equipment · Éléments Neutres · Neutrale Elemente' },
-  { id: 'G15', page: 733, name: 'Drop-in / Buffets',   langs: 'Drop-in / Buffets · Drop-in / Buffets · Drop-in / Büfetts' },
-  { id: 'G16', page: 818, name: 'Maquinaria Auxiliar', langs: 'Auxiliary Machinery · Machines Auxiliaires · Hilfsmaschinen' },
+  { id: 'G01', page:   1, es: 'Máquinas Bar',       en: 'Bar Machines',             fr: 'Machines Bar',              de: 'Barmaschinen' },
+  { id: 'G02', page:  47, es: 'Cocinas 450/550',     en: 'Cooking Ranges 450/550',   fr: 'Cuisinières 450/550',       de: 'Kochgeräte 450/550' },
+  { id: 'G03', page:  65, es: 'Cocinas 600',         en: 'Cooking Ranges 600',       fr: 'Cuisinières 600',           de: 'Kochgeräte 600' },
+  { id: 'G04', page:  93, es: 'Cocinas 700',         en: 'Cooking Ranges 700',       fr: 'Cuisinières 700',           de: 'Kochgeräte 700' },
+  { id: 'G05', page: 151, es: 'Cocinas 900',         en: 'Cooking Ranges 900',       fr: 'Cuisinières 900',           de: 'Kochgeräte 900' },
+  { id: 'G06', page: 207, es: 'Gran Producción',     en: 'Large Scale Production',   fr: 'Grande Production',         de: 'Großproduktion' },
+  { id: 'G07', page: 248, es: 'Equipos Calientes',   en: 'Hot Equipment',            fr: 'Équipements Chauds',        de: 'Heißgeräte' },
+  { id: 'G08', page: 286, es: 'Hornos / Ovens',      en: 'Ovens',                    fr: 'Fours',                     de: 'Öfen' },
+  { id: 'G09', page: 342, es: 'Asadores & BBQ',      en: 'Grills & BBQ',             fr: 'Rôtissoires & BBQ',         de: 'Grills & BBQ' },
+  { id: 'G10', page: 391, es: 'Campanas',            en: 'Hoods',                    fr: 'Hottes',                    de: 'Dunstabzugshauben' },
+  { id: 'G11', page: 425, es: 'Frío Industrial',     en: 'Industrial Refrigeration', fr: 'Réfrigération Industrielle',de: 'Industriekühlung' },
+  { id: 'G12', page: 498, es: 'Vitrinas',            en: 'Display Cases',            fr: 'Vitrines Réfrigérées',      de: 'Vitrinen' },
+  { id: 'G13', page: 590, es: 'Lavado / Washing',    en: 'Warewashing',              fr: 'Lavage / Plonge',           de: 'Spülgeräte' },
+  { id: 'G14', page: 662, es: 'Elementos Neutros',   en: 'Neutral Equipment',        fr: 'Éléments Neutres',          de: 'Neutrale Elemente' },
+  { id: 'G15', page: 733, es: 'Drop-in / Buffets',   en: 'Drop-in / Buffets',        fr: 'Drop-in / Buffets',         de: 'Drop-in / Büfetts' },
+  { id: 'G16', page: 818, es: 'Maquinaria Auxiliar', en: 'Auxiliary Machinery',      fr: 'Machines Auxiliaires',      de: 'Hilfsmaschinen' },
 ];
 
-// ── LOAD ───────────────────────────────────────────────────────────
+// ── LOAD PDF ───────────────────────────────────────────────────────
 const task = pdfjsLib.getDocument({ url: 'cataleg.pdf', rangeChunkSize: 65536 });
 task.onProgress = ({ loaded, total }) => {
   if (total) document.getElementById('pct').textContent =
@@ -418,26 +426,36 @@ document.getElementById('totalLbl').textContent = totalPages;
 document.getElementById('pageInput').max = totalPages;
 document.getElementById('btnNext').disabled = totalPages <= 1;
 
-// Hide loading
+// Hide loading overlay
 const overlay = document.getElementById('loadingOverlay');
 overlay.classList.add('hidden');
 setTimeout(() => overlay.remove(), 500);
 
-// ── BUILD PLACEHOLDERS ─────────────────────────────────────────────
-// Get a reference viewport to know page dimensions (most pages are the same size)
-const samplePage  = await pdf.getPage(1);
-const sampleVP    = samplePage.getViewport({ scale: 1 });
-const sampleRatio = sampleVP.height / sampleVP.width;
+// ── SAMPLE PAGE RATIO (with A4 fallback) ──────────────────────────
+// Wrap in try/catch with timeout so a failed getPage(1) doesn't
+// stop initialization
+let sampleRatio = 297 / 210; // A4 default
+try {
+  const ratioTimer = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000));
+  const samplePage = await Promise.race([pdf.getPage(1), ratioTimer]);
+  const sampleVP   = samplePage.getViewport({ scale: 1 });
+  sampleRatio      = sampleVP.height / sampleVP.width;
+} catch(e) {
+  console.warn('samplePage failed, using A4 ratio:', e.message);
+}
 
+// ── CALC PAGE WIDTH ────────────────────────────────────────────────
 function calcPageWidth() {
-  // Use window dimensions as reliable fallback (clientWidth/Height can be 0 during init)
-  const vW = viewer.clientWidth  || (window.innerWidth  - 215);
+  const vW = viewer.clientWidth  || (window.innerWidth  - 210);
   const vH = viewer.clientHeight || (window.innerHeight - 52);
   if (vW < 10) return 800;
   const fitByH = Math.max(vH - 24, 100) / sampleRatio;
   const maxW   = vW - 8;
   return Math.min(fitByH, maxW) * zoom;
 }
+
+// ── BUILD PAGE SLOTS ───────────────────────────────────────────────
+const LOADER_HTML = '<div class="page-loader"><img src="logo.png" class="page-loader-logo" alt=""><div class="page-loader-bar"></div></div>';
 
 function buildSlots() {
   const w = calcPageWidth();
@@ -446,26 +464,25 @@ function buildSlots() {
   rendered.clear();
 
   for (let i = 1; i <= totalPages; i++) {
-    const h = Math.round(w * sampleRatio);
+    const h    = Math.round(w * sampleRatio);
     const slot = document.createElement('div');
-    slot.className  = 'page-slot';
-    slot.id         = `p${i}`;
-    slot.dataset.page = i;
-    slot.style.width  = w + 'px';
-    slot.style.height = h + 'px';
-    slot.innerHTML = '<div class="page-loader"><div class="page-loader-mark">EURAST</div><div class="page-loader-bar"></div></div>';
+    slot.className     = 'page-slot';
+    slot.id            = `p${i}`;
+    slot.dataset.page  = i;
+    slot.style.width   = w + 'px';
+    slot.style.height  = h + 'px';
+    slot.innerHTML     = LOADER_HTML;
     viewer.appendChild(slot);
     slots.push(slot);
   }
 }
 
-// Wait 2 animation frames so the browser has calculated layout dimensions
-await new Promise(r => requestAnimationFrame(r));
-await new Promise(r => requestAnimationFrame(r));
+// Wait for layout before measuring viewport
+await new Promise(r => setTimeout(r, 50));
 buildSlots();
 
 // ── RENDER PAGE INTO SLOT ──────────────────────────────────────────
-const renderQueue = new Map(); // pageNum → Promise
+const renderQueue = new Map();
 
 async function renderSlot(num) {
   if (rendered.has(num)) return;
@@ -475,11 +492,10 @@ async function renderSlot(num) {
     const slot = slots[num - 1];
     if (!slot) return;
 
-    const page = await pdf.getPage(num);
-    const scale = calcPageWidth() / page.getViewport({ scale: 1 }).width; // zoom already inside calcPageWidth
+    const page  = await pdf.getPage(num);
+    const scale = calcPageWidth() / page.getViewport({ scale: 1 }).width;
     const vp    = page.getViewport({ scale });
 
-    // Resize slot to exact page dimensions
     slot.style.width  = vp.width  + 'px';
     slot.style.height = vp.height + 'px';
 
@@ -502,12 +518,11 @@ function unloadSlot(num) {
   if (!rendered.has(num)) return;
   const slot = slots[num - 1];
   if (!slot) return;
-  slot.innerHTML = '';
+  slot.innerHTML = LOADER_HTML;
   rendered.delete(num);
 }
 
 // ── VIRTUAL SCROLL OBSERVER ────────────────────────────────────────
-// Flag: ignore observer callbacks during initial setup
 let observerReady = false;
 
 const pageObs = new IntersectionObserver(entries => {
@@ -530,27 +545,43 @@ slots.forEach(s => pageObs.observe(s));
 viewer.scrollTop = 0;
 updateNav(1);
 
-// ── SIDEBAR — NAVEGACIÓ PER GRUPS ─────────────────────────────────
+// ── BUILD SIDEBAR GROUP BUTTONS ────────────────────────────────────
 GROUPS.forEach((g, idx) => {
   const btn = document.createElement('button');
   btn.className = 'nav-item' + (idx === 0 ? ' active' : '');
-  btn.id = `nav-${g.id}`;
-  btn.innerHTML = `<span class="nav-badge">${g.id}</span><span class="nav-name"><span class="nav-name-main">${g.name}</span><span class="nav-name-langs">${g.langs}</span></span>`;
+  btn.id        = `nav-${g.id}`;
+  btn.innerHTML = `<span class="nav-badge">${g.id}</span><span class="nav-name">${g[currentLang]}</span>`;
   btn.addEventListener('click', () => goTo(g.page));
   sidebar.appendChild(btn);
 });
 
-// Now render first pages (after groups are built, so UI is always usable)
+// ── LANGUAGE SWITCHER ──────────────────────────────────────────────
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.lang === lang));
+  document.getElementById('nav-label').textContent      = STRINGS[lang].navLabel;
+  document.getElementById('header-label').textContent   = STRINGS[lang].headerSub;
+  document.getElementById('btn-dl').textContent         = STRINGS[lang].download;
+  GROUPS.forEach(g => {
+    const btn = document.getElementById(`nav-${g.id}`);
+    if (btn) btn.querySelector('.nav-name').textContent = g[lang];
+  });
+}
+
+document.querySelectorAll('.lang-btn').forEach(btn =>
+  btn.addEventListener('click', () => setLang(btn.dataset.lang)));
+
+// ── RENDER INITIAL PAGES ───────────────────────────────────────────
 try {
   await renderSlot(1);
 } catch(e) { console.warn('renderSlot 1:', e); }
 renderSlot(2).catch(() => {});
 
-// Enable scroll observer after a short delay
 setTimeout(() => { observerReady = true; }, 300);
 
+// ── ACTIVE GROUP HIGHLIGHT ─────────────────────────────────────────
 function updateActiveGroup(pageNum) {
-  // Find the group this page belongs to
   let activeGroup = GROUPS[0];
   for (const g of GROUPS) {
     if (pageNum >= g.page) activeGroup = g;
@@ -566,9 +597,9 @@ function updateActiveGroup(pageNum) {
 
 // ── NAVIGATION ─────────────────────────────────────────────────────
 function updateNav(n) {
-  document.getElementById('pageInput').value = n;
-  document.getElementById('btnPrev').disabled = n <= 1;
-  document.getElementById('btnNext').disabled = n >= totalPages;
+  document.getElementById('pageInput').value    = n;
+  document.getElementById('btnPrev').disabled   = n <= 1;
+  document.getElementById('btnNext').disabled   = n >= totalPages;
   updateActiveGroup(n);
 }
 
@@ -577,21 +608,17 @@ function goTo(n) {
   const dist = Math.abs(n - currentPage);
 
   if (dist > 4) {
-    // Long jump (group click): disable observer so scrolling past intermediate
-    // pages doesn't queue renders for all of them
+    // Long jump: disable observer, pre-render destination, instant scroll
     observerReady = false;
-    currentPage = n;
+    currentPage   = n;
     updateNav(n);
-    // Kick off render of destination BEFORE scrolling
     renderSlot(n);
     for (let i = Math.max(1, n - PRERENDER); i <= Math.min(totalPages, n + PRERENDER); i++) {
       renderSlot(i);
     }
     slots[n - 1]?.scrollIntoView({ behavior: 'instant', block: 'start' });
-    // Re-enable observer after DOM settles
     setTimeout(() => { observerReady = true; }, 350);
   } else {
-    // Short jump: smooth scroll, let observer handle renders
     slots[n - 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
@@ -603,14 +630,13 @@ document.getElementById('pageInput').addEventListener('change', e => goTo(parseI
 // ── ZOOM ───────────────────────────────────────────────────────────
 function applyZoom() {
   document.getElementById('zoomLbl').textContent = Math.round(zoom * 100) + '%';
-  const w = calcPageWidth(); // zoom already included inside calcPageWidth
+  const w = calcPageWidth();
   slots.forEach(s => {
     s.style.width  = w + 'px';
     s.style.height = Math.round(w * sampleRatio) + 'px';
   });
   rendered.clear();
-  const loaderHTML = '<div class="page-loader"><div class="page-loader-mark">EURAST</div><div class="page-loader-bar"></div></div>';
-  slots.forEach(s => { s.innerHTML = loaderHTML; });
+  slots.forEach(s => { s.innerHTML = LOADER_HTML; });
   renderSlot(currentPage);
   for (let i = Math.max(1, currentPage - PRERENDER); i <= Math.min(totalPages, currentPage + PRERENDER); i++) {
     renderSlot(i);
@@ -632,8 +658,7 @@ window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
     rendered.clear();
-    const loaderHTML = '<div class="page-loader"><div class="page-loader-mark">EURAST</div><div class="page-loader-bar"></div></div>';
-    slots.forEach(s => { s.innerHTML = loaderHTML; });
+    slots.forEach(s => { s.innerHTML = LOADER_HTML; });
     const w = calcPageWidth();
     slots.forEach(s => {
       s.style.width  = w + 'px';
