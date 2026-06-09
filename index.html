@@ -473,16 +473,22 @@
     @media (max-width: 640px) {
       .logo-label { display: none; }
       #zoomGroup, #zoomDivider { display: none; }
+      #totalWrap { display: none; }
+      #dl-label  { display: none; }
+      .btn-dl    { padding: 7px 11px; letter-spacing: .02em; }
+      .toolbar   { gap: 4px; }
       .btn-menu { display: flex; align-items: center; }
 
       .sidebar {
         position: fixed;
         top: 52px; left: 0; bottom: 0;
+        width: 210px;
         z-index: 100;
         transform: translateX(-100%);
         transition: transform .25s ease;
         box-shadow: 4px 0 24px rgba(0,0,0,0.18);
       }
+      .viewer { width: 100%; }
       .sidebar.open { transform: translateX(0); }
       #sidebarBackdrop.open { display: block; }
 
@@ -547,7 +553,7 @@
     <div class="ctrl-group">
       <button id="btnPrev" disabled>‹</button>
       <input id="pageInput" type="number" value="1" min="1">
-      <span>/ <span id="totalLbl">—</span></span>
+      <span id="totalWrap">/ <span id="totalLbl">—</span></span>
       <button id="btnNext">›</button>
     </div>
     <div class="divider" id="zoomDivider"></div>
@@ -565,7 +571,7 @@
       <option value="it">IT</option>
       <option value="pt">PT</option>
     </select>
-    <a class="btn-dl" id="btn-dl" href="cataleg.pdf" download>↓ Descargar PDF</a>
+    <a class="btn-dl" id="btn-dl" href="cataleg.pdf" download>↓ <span id="dl-label">Descargar PDF</span></a>
   </div>
 </header>
 
@@ -839,7 +845,7 @@ function setLang(lang) {
   if (sel && sel.value !== lang) sel.value = lang;
   document.getElementById('nav-label').textContent      = STRINGS[lang].navLabel;
   document.getElementById('header-label').textContent   = STRINGS[lang].headerSub;
-  document.getElementById('btn-dl').textContent         = STRINGS[lang].download;
+  document.getElementById('dl-label').textContent       = STRINGS[lang].download.replace(/^↓\s*/, '');
   GROUPS.forEach(g => {
     const btn = document.getElementById(`nav-${g.id}`);
     if (btn) btn.querySelector('.nav-name').textContent = g[lang];
