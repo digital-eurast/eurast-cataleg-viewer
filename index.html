@@ -134,7 +134,7 @@
 
     /* ── SIDEBAR / GROUP NAV ── */
     .sidebar {
-      width: 190px;
+      width: 215px;
       flex-shrink: 0;
       background: #fff;
       border-right: 1px solid var(--border);
@@ -177,7 +177,6 @@
       background: rgba(237,105,44,.10);
     }
     .nav-item.active .nav-badge { background: var(--primary); color: #fff; }
-    .nav-item.active .nav-name { color: var(--primary); font-weight: 700; }
 
     .nav-badge {
       flex-shrink: 0;
@@ -193,12 +192,29 @@
       transition: background .12s, color .12s;
     }
     .nav-name {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .nav-name-main {
       font-size: 11px;
       font-weight: 500;
       color: var(--text);
-      line-height: 1.3;
+      line-height: 1.2;
       transition: color .12s;
     }
+    .nav-name-langs {
+      font-size: 8.5px;
+      font-weight: 400;
+      color: var(--grey-md);
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .nav-item.active .nav-name-main { color: var(--primary); font-weight: 700; }
+    .nav-item.active .nav-name-langs { color: rgba(237,105,44,.6); }
 
     /* ── VIEWER ── */
     .viewer {
@@ -226,6 +242,55 @@
       inset: 0;
       width: 100%;
       height: 100%;
+    }
+
+    /* ── PAGE LOADER (per slot) ── */
+    .page-loader {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      gap: 14px;
+      pointer-events: none;
+    }
+    .page-loader-mark {
+      background: #111;
+      color: #FFD700;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: .12em;
+      padding: 6px 14px;
+      border-radius: 6px;
+      animation: plsPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes plsPulse {
+      0%, 100% { opacity: .35; }
+      50%       { opacity: 1; }
+    }
+    .page-loader-bar {
+      width: 64px;
+      height: 3px;
+      background: var(--grey-lt);
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+    }
+    .page-loader-bar::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 40px;
+      height: 100%;
+      background: var(--primary);
+      border-radius: 2px;
+      animation: plsSlide 1s ease-in-out infinite;
+    }
+    @keyframes plsSlide {
+      0%   { transform: translateX(-40px); }
+      100% { transform: translateX(64px); }
     }
 
     /* ── LOADING ── */
@@ -322,22 +387,22 @@ const rendered = new Set();
 
 // ── GROUPS — declared at top so updateActiveGroup can use it ───────
 const GROUPS = [
-  { id: 'G01', page:   1, name: 'Màquines Bar' },
-  { id: 'G02', page:  47, name: 'Cocinas 450/550' },
-  { id: 'G03', page:  65, name: 'Cocinas 600' },
-  { id: 'G04', page:  93, name: 'Cocinas 700' },
-  { id: 'G05', page: 151, name: 'Cocinas 900' },
-  { id: 'G06', page: 207, name: 'Gran Producción' },
-  { id: 'G07', page: 248, name: 'Equips Calents' },
-  { id: 'G08', page: 286, name: 'Forns / Ovens' },
-  { id: 'G09', page: 342, name: 'Assadors i BBQ' },
-  { id: 'G10', page: 391, name: 'Campanes' },
-  { id: 'G11', page: 425, name: 'Fred Industrial' },
-  { id: 'G12', page: 498, name: 'Vitrines' },
-  { id: 'G13', page: 590, name: 'Rentat / Washing' },
-  { id: 'G14', page: 662, name: 'Elements Neutres' },
-  { id: 'G15', page: 733, name: 'Drop-in / Buffets' },
-  { id: 'G16', page: 818, name: 'Maquinària Aux.' },
+  { id: 'G01', page:   1, name: 'Máquinas Bar',       langs: 'Bar Machines · Machines Bar · Barmaschinen' },
+  { id: 'G02', page:  47, name: 'Cocinas 450/550',     langs: 'Cooking Ranges · Cuisinières 450/550 · Kochgeräte 450/550' },
+  { id: 'G03', page:  65, name: 'Cocinas 600',         langs: 'Cooking Ranges 600 · Cuisinières 600 · Kochgeräte 600' },
+  { id: 'G04', page:  93, name: 'Cocinas 700',         langs: 'Cooking Ranges 700 · Cuisinières 700 · Kochgeräte 700' },
+  { id: 'G05', page: 151, name: 'Cocinas 900',         langs: 'Cooking Ranges 900 · Cuisinières 900 · Kochgeräte 900' },
+  { id: 'G06', page: 207, name: 'Gran Producción',     langs: 'Large Scale · Grande Production · Großproduktion' },
+  { id: 'G07', page: 248, name: 'Equipos Calientes',   langs: 'Hot Equipment · Équip. Chauds · Heißgeräte' },
+  { id: 'G08', page: 286, name: 'Hornos / Ovens',      langs: 'Ovens · Fours · Öfen' },
+  { id: 'G09', page: 342, name: 'Asadores & BBQ',      langs: 'Grills & BBQ · Rôtissoires BBQ · Grills & BBQ' },
+  { id: 'G10', page: 391, name: 'Campanas',            langs: 'Hoods · Hottes · Dunstabzugshauben' },
+  { id: 'G11', page: 425, name: 'Frío Industrial',     langs: 'Industrial Refrigeration · Réfrigération · Industriekühlung' },
+  { id: 'G12', page: 498, name: 'Vitrinas',            langs: 'Display Cases · Vitrines réfrigérées · Vitrinen' },
+  { id: 'G13', page: 590, name: 'Lavado / Washing',    langs: 'Washing · Lavage · Spülgeräte' },
+  { id: 'G14', page: 662, name: 'Elementos Neutros',   langs: 'Neutral Equipment · Éléments Neutres · Neutrale Elemente' },
+  { id: 'G15', page: 733, name: 'Drop-in / Buffets',   langs: 'Drop-in / Buffets · Drop-in / Buffets · Drop-in / Büfetts' },
+  { id: 'G16', page: 818, name: 'Maquinaria Auxiliar', langs: 'Auxiliary Machinery · Machines Auxiliaires · Hilfsmaschinen' },
 ];
 
 // ── LOAD ───────────────────────────────────────────────────────────
@@ -366,7 +431,7 @@ const sampleRatio = sampleVP.height / sampleVP.width;
 
 function calcPageWidth() {
   // Use window dimensions as reliable fallback (clientWidth/Height can be 0 during init)
-  const vW = viewer.clientWidth  || (window.innerWidth  - 190);
+  const vW = viewer.clientWidth  || (window.innerWidth  - 215);
   const vH = viewer.clientHeight || (window.innerHeight - 52);
   if (vW < 10) return 800;
   const fitByH = Math.max(vH - 24, 100) / sampleRatio;
@@ -388,6 +453,7 @@ function buildSlots() {
     slot.dataset.page = i;
     slot.style.width  = w + 'px';
     slot.style.height = h + 'px';
+    slot.innerHTML = '<div class="page-loader"><div class="page-loader-mark">EURAST</div><div class="page-loader-bar"></div></div>';
     viewer.appendChild(slot);
     slots.push(slot);
   }
@@ -424,6 +490,7 @@ async function renderSlot(num) {
 
     await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
     rendered.add(num);
+    slot.querySelector('.page-loader')?.remove();
   })();
 
   renderQueue.set(num, promise);
@@ -468,7 +535,7 @@ GROUPS.forEach((g, idx) => {
   const btn = document.createElement('button');
   btn.className = 'nav-item' + (idx === 0 ? ' active' : '');
   btn.id = `nav-${g.id}`;
-  btn.innerHTML = `<span class="nav-badge">${g.id}</span><span class="nav-name">${g.name}</span>`;
+  btn.innerHTML = `<span class="nav-badge">${g.id}</span><span class="nav-name"><span class="nav-name-main">${g.name}</span><span class="nav-name-langs">${g.langs}</span></span>`;
   btn.addEventListener('click', () => goTo(g.page));
   sidebar.appendChild(btn);
 });
@@ -507,7 +574,26 @@ function updateNav(n) {
 
 function goTo(n) {
   n = Math.max(1, Math.min(totalPages, n));
-  slots[n - 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const dist = Math.abs(n - currentPage);
+
+  if (dist > 4) {
+    // Long jump (group click): disable observer so scrolling past intermediate
+    // pages doesn't queue renders for all of them
+    observerReady = false;
+    currentPage = n;
+    updateNav(n);
+    // Kick off render of destination BEFORE scrolling
+    renderSlot(n);
+    for (let i = Math.max(1, n - PRERENDER); i <= Math.min(totalPages, n + PRERENDER); i++) {
+      renderSlot(i);
+    }
+    slots[n - 1]?.scrollIntoView({ behavior: 'instant', block: 'start' });
+    // Re-enable observer after DOM settles
+    setTimeout(() => { observerReady = true; }, 350);
+  } else {
+    // Short jump: smooth scroll, let observer handle renders
+    slots[n - 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 document.getElementById('btnPrev').addEventListener('click', () => goTo(currentPage - 1));
@@ -523,7 +609,8 @@ function applyZoom() {
     s.style.height = Math.round(w * sampleRatio) + 'px';
   });
   rendered.clear();
-  slots.forEach(s => { s.innerHTML = ''; });
+  const loaderHTML = '<div class="page-loader"><div class="page-loader-mark">EURAST</div><div class="page-loader-bar"></div></div>';
+  slots.forEach(s => { s.innerHTML = loaderHTML; });
   renderSlot(currentPage);
   for (let i = Math.max(1, currentPage - PRERENDER); i <= Math.min(totalPages, currentPage + PRERENDER); i++) {
     renderSlot(i);
@@ -545,7 +632,8 @@ window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
     rendered.clear();
-    slots.forEach(s => { s.innerHTML = ''; });
+    const loaderHTML = '<div class="page-loader"><div class="page-loader-mark">EURAST</div><div class="page-loader-bar"></div></div>';
+    slots.forEach(s => { s.innerHTML = loaderHTML; });
     const w = calcPageWidth();
     slots.forEach(s => {
       s.style.width  = w + 'px';
