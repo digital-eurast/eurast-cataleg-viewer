@@ -317,9 +317,28 @@ const viewer  = document.getElementById('viewer');
 const sidebar = document.getElementById('sidebar');
 
 let pdf, totalPages, zoom = 1.0, currentPage = 1;
-const slots      = [];   // DOM wrappers, index = pageNum-1
-const rendered   = new Set();
-const thumbDone  = new Set();
+const slots   = [];
+const rendered = new Set();
+
+// ── GROUPS — declared at top so updateActiveGroup can use it ───────
+const GROUPS = [
+  { id: 'G01', page:   1, name: 'Màquines Bar' },
+  { id: 'G02', page:  47, name: 'Cocinas 450/550' },
+  { id: 'G03', page:  65, name: 'Cocinas 600' },
+  { id: 'G04', page:  93, name: 'Cocinas 700' },
+  { id: 'G05', page: 151, name: 'Cocinas 900' },
+  { id: 'G06', page: 207, name: 'Gran Producción' },
+  { id: 'G07', page: 248, name: 'Equips Calents' },
+  { id: 'G08', page: 286, name: 'Forns / Ovens' },
+  { id: 'G09', page: 342, name: 'Assadors i BBQ' },
+  { id: 'G10', page: 391, name: 'Campanes' },
+  { id: 'G11', page: 425, name: 'Fred Industrial' },
+  { id: 'G12', page: 498, name: 'Vitrines' },
+  { id: 'G13', page: 590, name: 'Rentat / Washing' },
+  { id: 'G14', page: 662, name: 'Elements Neutres' },
+  { id: 'G15', page: 733, name: 'Drop-in / Buffets' },
+  { id: 'G16', page: 818, name: 'Maquinària Aux.' },
+];
 
 // ── LOAD ───────────────────────────────────────────────────────────
 const task = pdfjsLib.getDocument({ url: 'cataleg.pdf', rangeChunkSize: 65536 });
@@ -445,26 +464,6 @@ viewer.scrollTop = 0;
 updateNav(1);
 
 // ── SIDEBAR — NAVEGACIÓ PER GRUPS ─────────────────────────────────
-// Build groups FIRST (sync, always works)
-const GROUPS = [
-  { id: 'G01', page:   1, name: 'Màquines Bar' },
-  { id: 'G02', page:  47, name: 'Cocinas 450/550' },
-  { id: 'G03', page:  65, name: 'Cocinas 600' },
-  { id: 'G04', page:  93, name: 'Cocinas 700' },
-  { id: 'G05', page: 151, name: 'Cocinas 900' },
-  { id: 'G06', page: 207, name: 'Gran Producción' },
-  { id: 'G07', page: 248, name: 'Equips Calents' },
-  { id: 'G08', page: 286, name: 'Forns / Ovens' },
-  { id: 'G09', page: 342, name: 'Assadors i BBQ' },
-  { id: 'G10', page: 391, name: 'Campanes' },
-  { id: 'G11', page: 425, name: 'Fred Industrial' },
-  { id: 'G12', page: 498, name: 'Vitrines' },
-  { id: 'G13', page: 590, name: 'Rentat / Washing' },
-  { id: 'G14', page: 662, name: 'Elements Neutres' },
-  { id: 'G15', page: 733, name: 'Drop-in / Buffets' },
-  { id: 'G16', page: 818, name: 'Maquinària Aux.' },
-];
-
 GROUPS.forEach((g, idx) => {
   const btn = document.createElement('button');
   btn.className = 'nav-item' + (idx === 0 ? ' active' : '');
