@@ -381,29 +381,35 @@ function unloadSlot(num) {
 }
 
 // ── VIRTUAL SCROLL OBSERVER ────────────────────────────────────────
+// Flag: ignore observer callbacks during initial setup
+let observerReady = false;
+
 const pageObs = new IntersectionObserver(entries => {
+  if (!observerReady) return;
   entries.forEach(e => {
+    if (!e.isIntersecting) return;
     const n = parseInt(e.target.dataset.page);
-    if (e.isIntersecting) {
-      currentPage = n;
-      updateNav(n);
-      // Render this page + neighbours
-      for (let i = Math.max(1, n - PRERENDER); i <= Math.min(totalPages, n + PRERENDER); i++) {
-        renderSlot(i);
-      }
-      // Unload far pages
-      rendered.forEach(r => {
-        if (Math.abs(r - n) > UNLOAD_FAR) unloadSlot(r);
-      });
+    currentPage = n;
+    updateNav(n);
+    for (let i = Math.max(1, n - PRERENDER); i <= Math.min(totalPages, n + PRERENDER); i++) {
+      renderSlot(i);
     }
+    rendered.forEach(r => {
+      if (Math.abs(r - n) > UNLOAD_FAR) unloadSlot(r);
+    });
   });
-}, { root: viewer, threshold: 0.1 });
+}, { root: viewer, threshold: 0.3 });
 
 slots.forEach(s => pageObs.observe(s));
 
-// Render first page immediately
+// Render first pages immediately, then enable observer
+viewer.scrollTop = 0;
 await renderSlot(1);
 renderSlot(2);
+updateNav(1);
+
+// Small delay so all initial IntersectionObserver callbacks fire & get ignored
+setTimeout(() => { observerReady = true; }, 300);
 
 // ── SIDEBAR THUMBNAILS ─────────────────────────────────────────────
 for (let i = 1; i <= totalPages; i++) {
