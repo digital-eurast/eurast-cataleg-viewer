@@ -126,6 +126,25 @@
     }
     .btn-dl:hover { background: var(--primary-h); }
 
+    .btn-contact {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 7px 14px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: all .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-contact:hover { background: var(--grey-lt); border-color: var(--grey-md); }
+
     /* ── LAYOUT ── */
     .layout {
       position: fixed;
@@ -784,6 +803,7 @@
         <circle cx="5.5" cy="5.5" r="4"/><path d="M9 9l3.5 3.5"/>
       </svg>
     </button>
+    <a class="btn-contact" id="btn-contact" href="https://eurast.com/es/contacto" target="_blank" rel="noopener"><span id="contact-label">Contacto</span></a>
     <a class="btn-dl" id="btn-dl" href="cataleg.pdf" download>↓ <span id="dl-label">Descargar PDF</span></a>
   </div>
 </header>
@@ -839,7 +859,7 @@ let   indexedCount = 0, isIndexing = false, searchTimer = null;
 // ── UI STRINGS (multilingual) ──────────────────────────────────────
 const STRINGS = {
   es: {
-    navLabel: 'Grupos', headerSub: 'Catálogo Tarifa RCR Completa', download: '↓ Descargar PDF',
+    navLabel: 'Grupos', headerSub: 'Catálogo Tarifa RCR Completa', download: '↓ Descargar PDF', contact: 'Contacto',
     loading: '0%', loadingSub: 'La primera página aparecerá en unos segundos',
     modal: {
       title: 'Descarga el catálogo',
@@ -851,7 +871,7 @@ const STRINGS = {
     },
   },
   en: {
-    navLabel: 'Groups', headerSub: 'RCR Complete Price List', download: '↓ Download PDF',
+    navLabel: 'Groups', headerSub: 'RCR Complete Price List', download: '↓ Download PDF', contact: 'Contact',
     loading: '0%', loadingSub: 'The first page will appear in a few seconds',
     modal: {
       title: 'Download the catalog',
@@ -863,7 +883,7 @@ const STRINGS = {
     },
   },
   fr: {
-    navLabel: 'Groupes', headerSub: 'Catalogue Tarif RCR Complet', download: '↓ Télécharger PDF',
+    navLabel: 'Groupes', headerSub: 'Catalogue Tarif RCR Complet', download: '↓ Télécharger PDF', contact: 'Contact',
     loading: '0%', loadingSub: 'La première page apparaîtra dans quelques secondes',
     modal: {
       title: 'Télécharger le catalogue',
@@ -875,7 +895,7 @@ const STRINGS = {
     },
   },
   de: {
-    navLabel: 'Gruppen', headerSub: 'RCR Vollständiger Preiskatalog', download: '↓ PDF herunterladen',
+    navLabel: 'Gruppen', headerSub: 'RCR Vollständiger Preiskatalog', download: '↓ PDF herunterladen', contact: 'Kontakt',
     loading: '0%', loadingSub: 'Die erste Seite erscheint in wenigen Sekunden',
     modal: {
       title: 'Katalog herunterladen',
@@ -887,7 +907,7 @@ const STRINGS = {
     },
   },
   it: {
-    navLabel: 'Gruppi', headerSub: 'Catalogo Prezzi RCR Completo', download: '↓ Scarica PDF',
+    navLabel: 'Gruppi', headerSub: 'Catalogo Prezzi RCR Completo', download: '↓ Scarica PDF', contact: 'Contatto',
     loading: '0%', loadingSub: 'La prima pagina apparirà tra pochi secondi',
     modal: {
       title: 'Scarica il catalogo',
@@ -899,7 +919,7 @@ const STRINGS = {
     },
   },
   pt: {
-    navLabel: 'Grupos', headerSub: 'Catálogo Preços RCR Completo', download: '↓ Descarregar PDF',
+    navLabel: 'Grupos', headerSub: 'Catálogo Preços RCR Completo', download: '↓ Descarregar PDF', contact: 'Contacto',
     loading: '0%', loadingSub: 'A primeira página aparecerá em poucos segundos',
     modal: {
       title: 'Descarregar o catálogo',
@@ -1092,6 +1112,13 @@ slots.forEach(s => pageObs.observe(s));
 viewer.scrollTop = 0;
 updateNav(1);
 
+// Navigate to #pag=N if present in URL
+const hashMatch = location.hash.match(/^#pag=(\d+)$/);
+if (hashMatch) {
+  const target = parseInt(hashMatch[1]);
+  if (target > 1 && target <= totalPages) goTo(target);
+}
+
 // ── BUILD SIDEBAR GROUP BUTTONS ────────────────────────────────────
 GROUPS.forEach((g, idx) => {
   const btn = document.createElement('button');
@@ -1110,6 +1137,7 @@ function setLang(lang) {
   document.getElementById('nav-label').textContent      = STRINGS[lang].navLabel;
   document.getElementById('header-label').textContent   = STRINGS[lang].headerSub;
   document.getElementById('dl-label').textContent       = STRINGS[lang].download.replace(/^↓\s*/, '');
+  document.getElementById('contact-label').textContent  = STRINGS[lang].contact;
   GROUPS.forEach(g => {
     const btn = document.getElementById(`nav-${g.id}`);
     if (btn) btn.querySelector('.nav-name').textContent = g[lang];
@@ -1269,6 +1297,7 @@ function updateNav(n) {
   document.getElementById('btnNext').disabled   = n >= totalPages;
   updateActiveGroup(n);
   updateSubPage(n);
+  history.replaceState(null, '', '#pag=' + n);
 }
 
 function goTo(n) {
