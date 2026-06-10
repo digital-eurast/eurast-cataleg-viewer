@@ -1189,6 +1189,10 @@ if (hashTarget > 1 && hashTarget <= totalPages && IS_MOBILE) goTo(hashTarget);
 
 // ── FLIP BOOK (desktop only) ───────────────────────────────────────
 if (!IS_MOBILE && typeof St !== 'undefined') {
+  // Stop the scroll-viewer observer — it must not interfere with flip mode
+  pageObs.disconnect();
+  observerReady = false;
+
   document.getElementById('viewer').hidden = true;
   document.getElementById('flipWrap').hidden = false;
   document.getElementById('btnPageView').hidden = false;
@@ -1249,8 +1253,8 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
     for (let i = Math.max(1, n - 5); i <= Math.min(totalPages, n + 5); i++) renderFlipPage(i);
   }
 
-  flipBook_instance.on('flip', e => {
-    const p = e.data + 1;
+  flipBook_instance.on('flip', () => {
+    const p = flipBook_instance.getCurrentPageIndex() + 1;
     currentPage = p;
     updateNav(p);
     prerenderAround(p);
