@@ -90,17 +90,20 @@
     .ctrl-group button:hover { background: var(--primary); color: #fff; }
     .ctrl-group button:disabled { opacity: .3; cursor: default; }
     .ctrl-group input {
-      width: 42px;
+      width: 52px;
       background: #fff;
       border: 1px solid var(--border);
       color: var(--text);
       text-align: center;
       border-radius: 4px;
-      padding: 2px 3px;
+      padding: 2px 4px;
       font-size: 12px;
       font-family: inherit;
       font-weight: 600;
     }
+    .ctrl-group input::-webkit-outer-spin-button,
+    .ctrl-group input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .ctrl-group input[type=number] { -moz-appearance: textfield; }
     .ctrl-group span {
       font-size: 12px;
       color: var(--grey-md);
@@ -516,6 +519,106 @@
       from { transform: translateY(60px); opacity: 0; }
       to   { transform: translateY(0);    opacity: 1; }
     }
+
+    /* ── SUB-PAGE GROUP ── */
+    .sub-group-badge {
+      font-size: 9px; font-weight: 800; letter-spacing: .04em;
+      background: var(--primary); color: #fff;
+      padding: 2px 5px; border-radius: 4px; flex-shrink: 0;
+    }
+    #subPageGroup input { width: 42px; }
+    #subPageGroup input::-webkit-outer-spin-button,
+    #subPageGroup input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    #subPageGroup input[type=number] { -moz-appearance: textfield; }
+
+    /* ── SEARCH BUTTON ── */
+    .btn-search {
+      background: none; border: 1px solid var(--border);
+      color: var(--grey-md); width: 32px; height: 32px;
+      border-radius: 7px; padding: 0; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .12s; flex-shrink: 0;
+    }
+    .btn-search:hover { background: var(--grey-lt); color: var(--text); }
+    .btn-search.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    /* ── SEARCH OVERLAY ── */
+    .search-overlay {
+      position: fixed; top: 52px; left: 0; right: 0;
+      background: #fff; border-bottom: 1px solid var(--border);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.13);
+      z-index: 150; padding: 10px 16px 14px;
+      animation: searchIn .15s ease;
+    }
+    .search-overlay[hidden] { display: none !important; }
+    @keyframes searchIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .search-inner { max-width: 700px; margin: 0 auto; }
+    .search-input-row {
+      display: flex; align-items: center; gap: 8px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 7px 12px; background: var(--grey-lt); transition: all .12s;
+    }
+    .search-input-row:focus-within { border-color: var(--primary); background: #fff; }
+    .search-input-row svg { flex-shrink: 0; color: var(--grey-md); }
+    .search-text-input {
+      flex: 1; border: none; background: none; outline: none;
+      font-family: inherit; font-size: 13px; color: var(--text);
+    }
+    .search-text-input::placeholder { color: var(--grey-md); }
+    .search-close-btn {
+      background: none; border: none; cursor: pointer;
+      color: var(--grey-md); font-size: 20px; line-height: 1;
+      padding: 0 2px; flex-shrink: 0; transition: color .1s;
+    }
+    .search-close-btn:hover { color: var(--text); }
+    .search-status {
+      font-size: 11px; color: var(--grey-md);
+      padding: 6px 2px 2px; min-height: 22px;
+    }
+    .search-index-wrap { display: flex; align-items: center; gap: 8px; }
+    .search-index-bar {
+      flex: 1; height: 3px; background: var(--grey-lt);
+      border-radius: 2px; overflow: hidden;
+    }
+    .search-index-fill {
+      height: 100%; background: var(--primary); border-radius: 2px;
+      transition: width .4s ease;
+    }
+    .search-results {
+      max-height: 300px; overflow-y: auto;
+      display: flex; flex-direction: column; margin-top: 4px;
+    }
+    .search-result {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 10px; border-radius: 8px; cursor: pointer;
+      transition: background .1s; border: none; background: none;
+      text-align: left; width: 100%; font-family: inherit;
+    }
+    .search-result:hover { background: var(--grey-lt); }
+    .search-result-badge {
+      flex-shrink: 0; font-size: 9px; font-weight: 800;
+      background: var(--grey-lt); color: var(--grey-md);
+      padding: 2px 5px; border-radius: 4px; min-width: 28px; text-align: center;
+    }
+    .search-result-page {
+      flex-shrink: 0; font-size: 11px; font-weight: 700;
+      color: var(--primary); min-width: 56px;
+    }
+    .search-result-snippet {
+      font-size: 11px; color: var(--grey-md);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;
+    }
+    .search-result-snippet mark {
+      background: rgba(237,105,44,.18); color: var(--text);
+      border-radius: 2px; padding: 0 1px; font-style: normal;
+    }
+
+    @media (max-width: 640px) {
+      #subPageGroup, #subDivider { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -567,6 +670,14 @@
       <span id="totalWrap">/ <span id="totalLbl">—</span></span>
       <button id="btnNext">›</button>
     </div>
+    <div class="divider" id="subDivider"></div>
+    <div class="ctrl-group" id="subPageGroup">
+      <span id="subGroupBadge" class="sub-group-badge">G01</span>
+      <button id="btnSubPrev" disabled>‹</button>
+      <input id="subPageInput" type="number" value="1" min="1">
+      <span>/ <span id="subTotalLbl">—</span></span>
+      <button id="btnSubNext">›</button>
+    </div>
     <div class="divider" id="zoomDivider"></div>
     <div class="ctrl-group" id="zoomGroup">
       <button id="btnZoomOut">−</button>
@@ -582,9 +693,30 @@
       <option value="it">IT</option>
       <option value="pt">PT</option>
     </select>
+    <button class="btn-search" id="btnSearch" aria-label="Buscar">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="5.5" cy="5.5" r="4"/><path d="M9 9l3.5 3.5"/>
+      </svg>
+    </button>
     <a class="btn-dl" id="btn-dl" href="cataleg.pdf" download>↓ <span id="dl-label">Descargar PDF</span></a>
   </div>
 </header>
+
+<!-- ── SEARCH OVERLAY ────────────────────────────────────────── -->
+<div id="searchOverlay" class="search-overlay" hidden>
+  <div class="search-inner">
+    <div class="search-input-row">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="5.5" cy="5.5" r="4"/><path d="M9 9l3.5 3.5"/>
+      </svg>
+      <input id="searchTextInput" class="search-text-input" type="text"
+             placeholder="Buscar referencia, modelo o descripción..." autocomplete="off">
+      <button class="search-close-btn" id="btnSearchClose" aria-label="Cerrar">×</button>
+    </div>
+    <div id="searchStatus" class="search-status"></div>
+    <div id="searchResults" class="search-results"></div>
+  </div>
+</div>
 
 <div class="layout">
   <div id="sidebarBackdrop"></div>
@@ -610,6 +742,13 @@ const sidebar = document.getElementById('sidebar');
 let pdf, totalPages, zoom = 1.0, currentPage = 1;
 const slots    = [];
 const rendered = new Set();
+
+// Sub-page nav state
+let currentGroupStart = 1, currentGroupEnd = 1;
+
+// Search index state
+const searchIndex = [];
+let   indexedCount = 0, isIndexing = false, searchTimer = null;
 
 // ── UI STRINGS (multilingual) ──────────────────────────────────────
 const STRINGS = {
@@ -933,9 +1072,8 @@ async function submitLead(email, company) {
 
   const sendPromise = fetch(LEAD_WEBHOOK, {
     method:  'POST',
-    mode:    'no-cors',   // Make webhooks don't send CORS headers — response is opaque but data IS received
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+    mode:    'no-cors',   // URLSearchParams → application/x-www-form-urlencoded (CORS-safelisted, no preflight)
+    body: new URLSearchParams({
       email,
       company,
       country,
@@ -1030,6 +1168,7 @@ function updateNav(n) {
   document.getElementById('btnPrev').disabled   = n <= 1;
   document.getElementById('btnNext').disabled   = n >= totalPages;
   updateActiveGroup(n);
+  updateSubPage(n);
 }
 
 function goTo(n) {
@@ -1115,11 +1254,166 @@ window.addEventListener('resize', () => {
 
 // ── KEYBOARD ──────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeModal(); return; }
-  if (!document.getElementById('leadModal').hidden) return; // block nav when modal open
+  if (e.key === 'Escape') {
+    if (!document.getElementById('searchOverlay').hidden) { closeSearch(); return; }
+    closeModal(); return;
+  }
+  if (!document.getElementById('leadModal').hidden) return;
+  if (!document.getElementById('searchOverlay').hidden) return;
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(currentPage + 1);
   if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(currentPage - 1);
 });
+
+// ── SUB-PAGE NAVIGATION ────────────────────────────────────────────
+function getGroupBounds(pageNum) {
+  let idx = 0;
+  for (let i = 0; i < GROUPS.length; i++) {
+    if (pageNum >= GROUPS[i].page) idx = i;
+    else break;
+  }
+  const start = GROUPS[idx].page;
+  const end   = idx + 1 < GROUPS.length ? GROUPS[idx + 1].page - 1 : totalPages;
+  return { start, end, total: end - start + 1, group: GROUPS[idx] };
+}
+
+function updateSubPage(pageNum) {
+  const { start, end, total, group } = getGroupBounds(pageNum);
+  currentGroupStart = start;
+  currentGroupEnd   = end;
+  document.getElementById('subGroupBadge').textContent = group.id;
+  document.getElementById('subPageInput').value        = pageNum - start + 1;
+  document.getElementById('subPageInput').max          = total;
+  document.getElementById('subTotalLbl').textContent   = total;
+  document.getElementById('btnSubPrev').disabled       = pageNum <= start;
+  document.getElementById('btnSubNext').disabled       = pageNum >= end;
+}
+
+document.getElementById('btnSubPrev').addEventListener('click', () => goTo(currentPage - 1));
+document.getElementById('btnSubNext').addEventListener('click', () => goTo(currentPage + 1));
+document.getElementById('subPageInput').addEventListener('change', e => {
+  goTo(currentGroupStart + (parseInt(e.target.value) || 1) - 1);
+});
+
+// ── SEARCH INDEX ──────────────────────────────────────────────────
+function getGroupIdxForPage(pageNum) {
+  let idx = 0;
+  for (let i = 0; i < GROUPS.length; i++) {
+    if (pageNum >= GROUPS[i].page) idx = i;
+    else break;
+  }
+  return idx;
+}
+
+async function buildSearchIndex() {
+  if (isIndexing || indexedCount >= totalPages) return;
+  isIndexing = true;
+  for (let i = 1; i <= totalPages; i += 6) {
+    const tasks = [];
+    for (let j = i; j < Math.min(i + 6, totalPages + 1); j++) {
+      tasks.push((async n => {
+        try {
+          const page = await pdf.getPage(n);
+          const tc   = await page.getTextContent();
+          searchIndex.push({ page: n, gIdx: getGroupIdxForPage(n), text: tc.items.map(it => it.str).join(' ') });
+          indexedCount++;
+        } catch(_) {}
+      })(j));
+    }
+    await Promise.all(tasks);
+    if (!document.getElementById('searchOverlay').hidden) renderSearchStatus('');
+    await new Promise(r => setTimeout(r, 15));
+  }
+  isIndexing = false;
+  if (!document.getElementById('searchOverlay').hidden) renderSearchStatus('');
+}
+
+function renderSearchStatus(query) {
+  const el = document.getElementById('searchStatus');
+  if (!el) return;
+  if (isIndexing) {
+    const pct = Math.round(indexedCount / totalPages * 100);
+    el.innerHTML = `<div class="search-index-wrap">
+      <span>Indexant… ${indexedCount}/${totalPages}</span>
+      <div class="search-index-bar"><div class="search-index-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  } else if (!query || query.length < 2) {
+    el.textContent = indexedCount > 0 ? `${indexedCount} pàgines indexades · escriu per buscar` : '';
+  }
+}
+
+function doSearch(query) {
+  const statusEl  = document.getElementById('searchStatus');
+  const resultsEl = document.getElementById('searchResults');
+  if (!statusEl || !resultsEl) return;
+  if (!query || query.length < 2) { resultsEl.innerHTML = ''; renderSearchStatus(query); return; }
+
+  const q    = query.toLowerCase();
+  const hits = [];
+  for (const e of searchIndex) {
+    const lower = e.text.toLowerCase();
+    let pos = lower.indexOf(q);
+    let cnt = 0;
+    while (pos !== -1 && cnt < 2) {
+      const s = Math.max(0, pos - 30), end = Math.min(e.text.length, pos + q.length + 45);
+      hits.push({ page: e.page, gIdx: e.gIdx, raw: e.text.substring(s, end), mo: pos - s });
+      pos = lower.indexOf(q, pos + 1); cnt++;
+    }
+  }
+  hits.sort((a, b) => a.page - b.page);
+
+  if (isIndexing) {
+    const pct = Math.round(indexedCount / totalPages * 100);
+    statusEl.innerHTML = `<div class="search-index-wrap">
+      <span><strong>${hits.length}</strong> resultats (indexant ${pct}%…)</span>
+      <div class="search-index-bar"><div class="search-index-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  } else {
+    statusEl.textContent = hits.length === 0 ? 'Cap resultat' : `${hits.length} resultat${hits.length !== 1 ? 's' : ''}`;
+  }
+
+  resultsEl.innerHTML = '';
+  hits.slice(0, 30).forEach(h => {
+    const g   = GROUPS[h.gIdx];
+    const btn = document.createElement('button');
+    btn.className = 'search-result';
+    const safe = h.raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const snip = safe.slice(0, h.mo) + `<mark>${safe.slice(h.mo, h.mo + query.length)}</mark>` + safe.slice(h.mo + query.length);
+    btn.innerHTML = `<span class="search-result-badge">${g.id}</span>
+      <span class="search-result-page">Pàg. ${h.page}</span>
+      <span class="search-result-snippet">${snip}</span>`;
+    btn.addEventListener('click', () => { goTo(h.page); closeSearch(); });
+    resultsEl.appendChild(btn);
+  });
+}
+
+// ── SEARCH UI ─────────────────────────────────────────────────────
+function openSearch() {
+  document.getElementById('searchOverlay').hidden = false;
+  document.getElementById('btnSearch').classList.add('active');
+  document.getElementById('searchTextInput').focus();
+  renderSearchStatus('');
+  if (!isIndexing && indexedCount === 0) buildSearchIndex();
+}
+function closeSearch() {
+  document.getElementById('searchOverlay').hidden = true;
+  document.getElementById('btnSearch').classList.remove('active');
+  document.getElementById('searchTextInput').value = '';
+  document.getElementById('searchResults').innerHTML = '';
+}
+document.getElementById('btnSearch').addEventListener('click', () =>
+  document.getElementById('searchOverlay').hidden ? openSearch() : closeSearch());
+document.getElementById('btnSearchClose').addEventListener('click', closeSearch);
+document.getElementById('searchTextInput').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => doSearch(e.target.value), 220);
+});
+document.getElementById('searchTextInput').addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSearch();
+  if (e.key === 'Enter') { clearTimeout(searchTimer); doSearch(e.target.value); }
+});
+
+// Pre-index in background after initial render
+setTimeout(() => buildSearchIndex(), 4000);
 </script>
 </body>
 </html>
