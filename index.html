@@ -1304,6 +1304,36 @@ function getGroupIdxForPage(pageNum) {
   return idx;
 }
 
+const SEARCH_CACHE_KEY = 'eurast_idx_v2';
+
+function tryRestoreSearchIndex() {
+  try {
+    const stored = localStorage.getItem(SEARCH_CACHE_KEY);
+    if (!stored) return false;
+    const data = JSON.parse(stored);
+    if (!data || data.total !== totalPages || !Array.isArray(data.entries) || !data.entries.length) return false;
+    searchIndex.push(...data.entries);
+    indexedCount = data.entries.length;
+    return true;
+  } catch(_) { return false; }
+}
+
+function saveSearchIndexCache() {
+  try {
+    localStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify({ total: totalPages, entries: searchIndex }));
+  } catch(_) {}
+}
+
+// Map position in norm string (no spaces) back to position in original text
+function mapNormToText(text, normPos) {
+  let count = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (count >= normPos) return i;
+    if (!/\s/.test(text[i])) count++;
+  }
+  return text.length;
+}
+
 async function buildSearchIndex() {
   if (isIndexing || indexedCount >= totalPages) return;
   isIndexing = true;
@@ -1314,7 +1344,9 @@ async function buildSearchIndex() {
         try {
           const page = await pdf.getPage(n);
           const tc   = await page.getTextContent();
-          searchIndex.push({ page: n, gIdx: getGroupIdxForPage(n), text: tc.items.map(it => it.str).join(' ') });
+          const text = tc.items.map(it => it.str).join(' ');
+          const norm = text.replace(/\s+/g, '');
+          searchIndex.push({ page: n, gIdx: getGroupIdxForPage(n), text, norm });
           indexedCount++;
         } catch(_) {}
       })(j));
@@ -1324,6 +1356,7 @@ async function buildSearchIndex() {
     await new Promise(r => setTimeout(r, 15));
   }
   isIndexing = false;
+  saveSearchIndexCache();
   if (!document.getElementById('searchOverlay').hidden) renderSearchStatus('');
 }
 
@@ -1345,18 +1378,37 @@ function doSearch(query) {
   const statusEl  = document.getElementById('searchStatus');
   const resultsEl = document.getElementById('searchResults');
   if (!statusEl || !resultsEl) return;
-  if (!query || query.length < 2) { resultsEl.innerHTML = ''; renderSearchStatus(query); return; }
+  const q      = query.toLowerCase().trim();
+  const qNorm  = q.replace(/\s+/g, '');
+  if (!qNorm || qNorm.length < 2) { resultsEl.innerHTML = ''; renderSearchStatus(query); return; }
 
-  const q    = query.toLowerCase();
-  const hits = [];
+  const hits     = [];
+  const fullHitPages = new Set();
+
   for (const e of searchIndex) {
     const lower = e.text.toLowerCase();
-    let pos = lower.indexOf(q);
-    let cnt = 0;
-    while (pos !== -1 && cnt < 2) {
-      const s = Math.max(0, pos - 30), end = Math.min(e.text.length, pos + q.length + 45);
-      hits.push({ page: e.page, gIdx: e.gIdx, raw: e.text.substring(s, end), mo: pos - s });
-      pos = lower.indexOf(q, pos + 1); cnt++;
+
+    // Full-text match (query as typed, with any spaces)
+    if (q.length >= 2) {
+      let pos = lower.indexOf(q), cnt = 0;
+      while (pos !== -1 && cnt < 2) {
+        fullHitPages.add(e.page);
+        const s = Math.max(0, pos - 30), end = Math.min(e.text.length, pos + q.length + 45);
+        hits.push({ page: e.page, gIdx: e.gIdx, raw: e.text.substring(s, end), mo: pos - s, mLen: q.length });
+        pos = lower.indexOf(q, pos + 1); cnt++;
+      }
+    }
+
+    // Compact match: ignore spaces in both text and query — catches "3416 2313" when typing "34162313"
+    if (!fullHitPages.has(e.page) && e.norm && qNorm.length >= 2) {
+      const normLower = e.norm.toLowerCase();
+      const npos = normLower.indexOf(qNorm);
+      if (npos !== -1) {
+        const textPos = mapNormToText(e.text, npos);
+        const textEnd = mapNormToText(e.text, npos + qNorm.length);
+        const s = Math.max(0, textPos - 30), end = Math.min(e.text.length, textEnd + 45);
+        hits.push({ page: e.page, gIdx: e.gIdx, raw: e.text.substring(s, end), mo: textPos - s, mLen: textEnd - textPos });
+      }
     }
   }
   hits.sort((a, b) => a.page - b.page);
@@ -1377,7 +1429,7 @@ function doSearch(query) {
     const btn = document.createElement('button');
     btn.className = 'search-result';
     const safe = h.raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const snip = safe.slice(0, h.mo) + `<mark>${safe.slice(h.mo, h.mo + query.length)}</mark>` + safe.slice(h.mo + query.length);
+    const snip = safe.slice(0, h.mo) + `<mark>${safe.slice(h.mo, h.mo + h.mLen)}</mark>` + safe.slice(h.mo + h.mLen);
     btn.innerHTML = `<span class="search-result-badge">${g.id}</span>
       <span class="search-result-page">Pàg. ${h.page}</span>
       <span class="search-result-snippet">${snip}</span>`;
@@ -1412,8 +1464,8 @@ document.getElementById('searchTextInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') { clearTimeout(searchTimer); doSearch(e.target.value); }
 });
 
-// Pre-index in background after initial render
-setTimeout(() => buildSearchIndex(), 4000);
+// Pre-index: restore from localStorage cache if available, otherwise build in background
+setTimeout(() => { if (!tryRestoreSearchIndex()) buildSearchIndex(); }, 4000);
 </script>
 </body>
 </html>
