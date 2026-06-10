@@ -1110,10 +1110,13 @@ const pageObs = new IntersectionObserver(entries => {
 
 slots.forEach(s => pageObs.observe(s));
 viewer.scrollTop = 0;
+
+// Read hash BEFORE updateNav overwrites it with #pag=1
+const initialHash = location.hash;
 updateNav(1);
 
 // Navigate to #pag=N if present in URL
-const hashMatch = location.hash.match(/^#pag=(\d+)$/);
+const hashMatch = initialHash.match(/^#pag=(\d+)$/);
 if (hashMatch) {
   const target = parseInt(hashMatch[1]);
   if (target > 1 && target <= totalPages) goTo(target);
