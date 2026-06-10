@@ -540,15 +540,67 @@
     }
 
     /* ── SUB-PAGE GROUP ── */
-    .sub-group-badge {
-      font-size: 9px; font-weight: 800; letter-spacing: .04em;
-      background: var(--primary); color: #fff;
-      padding: 2px 5px; border-radius: 4px; flex-shrink: 0;
+    .group-nav-wrap { position: relative; flex-shrink: 0; }
+    .group-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--primary); color: #fff; border: none;
+      border-radius: 18px; padding: 4px 12px;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      white-space: nowrap; letter-spacing: 0.01em;
     }
-    #subPageGroup input { width: 42px; }
-    #subPageGroup input::-webkit-outer-spin-button,
-    #subPageGroup input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    #subPageGroup input[type=number] { -moz-appearance: textfield; }
+    .group-pill:hover { filter: brightness(1.08); }
+    .pill-sep { opacity: 0.5; font-weight: 400; }
+    .pill-chevron { font-size: 9px; opacity: 0.7; margin-left: 1px; }
+
+    #groupDropdown {
+      position: absolute; top: calc(100% + 6px); left: 0;
+      background: #fff; border: 1px solid #e0e0d8;
+      border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      z-index: 900; min-width: 270px; max-height: 380px; overflow-y: auto;
+    }
+    .drop-hdr {
+      padding: 7px 14px 6px; font-size: 11px; font-weight: 700;
+      letter-spacing: 0.07em; text-transform: uppercase; color: #aaa;
+      border-bottom: 1px solid #f0f0ea;
+      position: sticky; top: 0; background: #fff;
+      border-radius: 10px 10px 0 0;
+    }
+    .drop-group-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 14px; cursor: pointer; font-size: 13px;
+      border: none; background: none; width: 100%; text-align: left;
+    }
+    .drop-group-item:hover, .drop-group-item.active { background: #fff5f0; }
+    .drop-g-badge {
+      background: var(--primary); color: #fff; border-radius: 4px;
+      font-size: 11px; font-weight: 700; padding: 1px 5px;
+      min-width: 30px; text-align: center; flex-shrink: 0;
+    }
+    .drop-g-badge.dim { background: #e0e0d8; color: #888; }
+    .drop-g-name { flex: 1; color: #333; }
+    .drop-g-pages { font-size: 11px; color: #c0c0b8; }
+    .drop-step2-inner { padding: 14px; }
+    .drop-back-btn {
+      background: none; border: none; color: var(--primary);
+      font-size: 13px; font-weight: 700; cursor: pointer; padding: 0 0 10px;
+      display: block; text-align: left;
+    }
+    .drop-page-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 14px; }
+    .drop-page-num {
+      width: 62px; border: 2px solid var(--primary); border-radius: 6px;
+      text-align: center; font-size: 20px; font-weight: 700;
+      color: #333; padding: 6px 4px;
+    }
+    .drop-page-num::-webkit-outer-spin-button,
+    .drop-page-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .drop-page-num[type=number] { -moz-appearance: textfield; }
+    .drop-page-of { font-size: 14px; color: #bbb; }
+    .drop-page-total { font-size: 18px; font-weight: 600; color: #555; }
+    .drop-go-btn {
+      width: 100%; background: var(--primary); color: #fff; border: none;
+      border-radius: 7px; padding: 9px; font-size: 14px; font-weight: 700; cursor: pointer;
+    }
+    .drop-go-btn:hover { filter: brightness(1.08); }
 
     /* ── SEARCH BUTTON ── */
     .btn-search {
@@ -636,7 +688,7 @@
     }
 
     @media (max-width: 640px) {
-      #subPageGroup, #subDivider { display: none; }
+      .group-nav-wrap, #subDivider { display: none; }
     }
   </style>
 </head>
@@ -690,12 +742,27 @@
       <button id="btnNext">›</button>
     </div>
     <div class="divider" id="subDivider"></div>
-    <div class="ctrl-group" id="subPageGroup">
-      <span id="subGroupBadge" class="sub-group-badge">G01</span>
-      <button id="btnSubPrev" disabled>‹</button>
-      <input id="subPageInput" type="number" value="1" min="1">
-      <span>/ <span id="subTotalLbl">—</span></span>
-      <button id="btnSubNext">›</button>
+    <div class="group-nav-wrap">
+      <button class="group-pill" id="groupPill">
+        <span id="pillGroupId">G01</span><span class="pill-sep">·</span><span id="pillGroupName"></span><span class="pill-sep">·</span><span id="pillSubPage">1</span><span class="pill-sep">/</span><span id="pillSubTotal">—</span><span class="pill-chevron">▾</span>
+      </button>
+      <div id="groupDropdown" hidden>
+        <div id="dropStep1">
+          <div class="drop-hdr" id="dropHdrText"></div>
+          <div id="dropGroupList"></div>
+        </div>
+        <div id="dropStep2" hidden>
+          <div class="drop-step2-inner">
+            <button class="drop-back-btn" id="dropBack">‹ <span id="dropBackName"></span></button>
+            <div class="drop-page-row">
+              <input id="dropPageNum" class="drop-page-num" type="number" min="1" value="1">
+              <span class="drop-page-of">/</span>
+              <span id="dropPageTotalLbl" class="drop-page-total">—</span>
+            </div>
+            <button class="drop-go-btn" id="dropGoBtn">→</button>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="divider" id="zoomDivider"></div>
     <div class="ctrl-group" id="zoomGroup">
@@ -1048,6 +1115,7 @@ function setLang(lang) {
     if (btn) btn.querySelector('.nav-name').textContent = g[lang];
   });
   updateModal(lang);
+  updateSubPage(currentPage);
 }
 
 document.getElementById('langSelect').addEventListener('change', e => setLang(e.target.value));
@@ -1312,18 +1380,88 @@ function updateSubPage(pageNum) {
   const { start, end, total, group } = getGroupBounds(pageNum);
   currentGroupStart = start;
   currentGroupEnd   = end;
-  document.getElementById('subGroupBadge').textContent = group.id;
-  document.getElementById('subPageInput').value        = pageNum - start + 1;
-  document.getElementById('subPageInput').max          = total;
-  document.getElementById('subTotalLbl').textContent   = total;
-  document.getElementById('btnSubPrev').disabled       = pageNum <= start;
-  document.getElementById('btnSubNext').disabled       = pageNum >= end;
+  document.getElementById('pillGroupId').textContent   = group.id;
+  document.getElementById('pillGroupName').textContent = group[currentLang];
+  document.getElementById('pillSubPage').textContent   = Math.max(1, pageNum - start + 1);
+  document.getElementById('pillSubTotal').textContent  = total;
 }
 
-document.getElementById('btnSubPrev').addEventListener('click', () => goTo(currentPage - 1));
-document.getElementById('btnSubNext').addEventListener('click', () => goTo(currentPage + 1));
-document.getElementById('subPageInput').addEventListener('change', e => {
-  goTo(currentGroupStart + (parseInt(e.target.value) || 1) - 1);
+// ── GROUP DROPDOWN ────────────────────────────────────────────────
+const DROP_LABEL = { es:'Grupo', en:'Group', fr:'Groupe', de:'Gruppe', it:'Gruppo', pt:'Grupo' };
+const DROP_GO    = { es:'Ir →', en:'Go →', fr:'Aller →', de:'Los →', it:'Vai →', pt:'Ir →' };
+let dropSelectedGroupIdx = 0;
+
+function buildDropGroupList() {
+  const list = document.getElementById('dropGroupList');
+  list.innerHTML = '';
+  const curIdx = getGroupIdxForPage(currentPage);
+  GROUPS.forEach((g, idx) => {
+    const endPage = idx + 1 < GROUPS.length ? GROUPS[idx + 1].page - 1 : totalPages;
+    const pages = endPage - g.page + 1;
+    const btn = document.createElement('button');
+    btn.className = 'drop-group-item' + (idx === curIdx ? ' active' : '');
+    btn.innerHTML = `<span class="drop-g-badge${idx !== curIdx ? ' dim' : ''}">${g.id}</span>
+      <span class="drop-g-name">${g[currentLang]}</span>
+      <span class="drop-g-pages">${pages}</span>`;
+    btn.addEventListener('click', () => openDropStep2(idx));
+    list.appendChild(btn);
+  });
+}
+
+function openDropStep2(groupIdx) {
+  dropSelectedGroupIdx = groupIdx;
+  const g = GROUPS[groupIdx];
+  const endPage = groupIdx + 1 < GROUPS.length ? GROUPS[groupIdx + 1].page - 1 : totalPages;
+  const total = endPage - g.page + 1;
+  document.getElementById('dropStep1').hidden = true;
+  document.getElementById('dropStep2').hidden = false;
+  document.getElementById('dropBackName').textContent    = `${g.id} · ${g[currentLang]}`;
+  document.getElementById('dropPageTotalLbl').textContent = total;
+  document.getElementById('dropGoBtn').textContent       = DROP_GO[currentLang];
+  const inp = document.getElementById('dropPageNum');
+  inp.max = total; inp.value = 1;
+  setTimeout(() => { inp.focus(); inp.select(); }, 50);
+}
+
+function openGroupDropdown() {
+  const dd = document.getElementById('groupDropdown');
+  if (!dd.hidden) { dd.hidden = true; return; }
+  document.getElementById('dropStep1').hidden = false;
+  document.getElementById('dropStep2').hidden = true;
+  document.getElementById('dropHdrText').textContent = DROP_LABEL[currentLang];
+  buildDropGroupList();
+  dd.hidden = false;
+}
+
+function closeGroupDropdown() {
+  document.getElementById('groupDropdown').hidden = true;
+}
+
+function navigateFromDrop() {
+  const g = GROUPS[dropSelectedGroupIdx];
+  const endPage = dropSelectedGroupIdx + 1 < GROUPS.length ? GROUPS[dropSelectedGroupIdx + 1].page - 1 : totalPages;
+  const total = endPage - g.page + 1;
+  const p = Math.min(Math.max(parseInt(document.getElementById('dropPageNum').value) || 1, 1), total);
+  goTo(g.page + p - 1);
+  closeGroupDropdown();
+}
+
+document.getElementById('groupPill').addEventListener('click', openGroupDropdown);
+document.getElementById('dropBack').addEventListener('click', () => {
+  document.getElementById('dropStep1').hidden = false;
+  document.getElementById('dropStep2').hidden = true;
+});
+document.getElementById('dropGoBtn').addEventListener('click', navigateFromDrop);
+document.getElementById('dropPageNum').addEventListener('keydown', e => {
+  if (e.key === 'Enter') navigateFromDrop();
+  if (e.key === 'Escape') closeGroupDropdown();
+});
+document.addEventListener('click', e => {
+  if (!document.getElementById('groupDropdown').hidden &&
+      !document.getElementById('groupPill').contains(e.target) &&
+      !document.getElementById('groupDropdown').contains(e.target)) {
+    closeGroupDropdown();
+  }
 });
 
 // ── SEARCH INDEX ──────────────────────────────────────────────────
