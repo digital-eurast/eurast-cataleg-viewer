@@ -6,6 +6,7 @@
   <title>Catálogo Tarifa — EURAST</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -560,6 +561,63 @@
       to   { transform: translateY(0);    opacity: 1; }
     }
 
+    /* ── FLIP BOOK ── */
+    .flip-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1e1e1e;
+      position: relative;
+      overflow: hidden;
+    }
+    #flipBook { position: relative; }
+    .flip-page {
+      background: #fff;
+      overflow: hidden;
+    }
+    .flip-page canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .flip-page-loading {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: #fff;
+    }
+    .flip-arrow {
+      position: absolute;
+      top: 50%; transform: translateY(-50%);
+      z-index: 20;
+      background: rgba(255,255,255,0.92);
+      border: none; border-radius: 50%;
+      width: 48px; height: 48px;
+      font-size: 28px; line-height: 1;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.35);
+      color: #333;
+      transition: all .15s;
+      font-family: inherit;
+    }
+    .flip-arrow:hover { background: #fff; transform: translateY(-50%) scale(1.08); }
+    .flip-arrow-prev { left: 20px; }
+    .flip-arrow-next { right: 20px; }
+
+    .btn-page-view {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--grey-md);
+      width: 32px; height: 32px;
+      border-radius: 7px; font-size: 15px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .12s; flex-shrink: 0;
+      font-family: inherit;
+    }
+    .btn-page-view:hover { background: var(--grey-lt); color: var(--text); }
+
     /* ── SUB-PAGE GROUP ── */
     .group-nav-wrap { position: relative; flex-shrink: 0; }
     .group-pill {
@@ -800,6 +858,7 @@
       <option value="it">IT</option>
       <option value="pt">PT</option>
     </select>
+    <button class="btn-page-view" id="btnPageView" title="Canviar vista" hidden>⊟</button>
     <button class="btn-search" id="btnSearch" aria-label="Buscar">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="5.5" cy="5.5" r="4"/><path d="M9 9l3.5 3.5"/>
@@ -832,6 +891,11 @@
     <div class="nav-label" id="nav-label">Grupos</div>
   </div>
   <div class="viewer" id="viewer"></div>
+  <div class="flip-wrap" id="flipWrap" hidden>
+    <button class="flip-arrow flip-arrow-prev" id="flipPrev">&#8249;</button>
+    <div id="flipBook"></div>
+    <button class="flip-arrow flip-arrow-next" id="flipNext">&#8250;</button>
+  </div>
 </div>
 
 <script type="module">
@@ -848,6 +912,7 @@ const viewer  = document.getElementById('viewer');
 const sidebar = document.getElementById('sidebar');
 
 let pdf, totalPages, zoom = 1.0, currentPage = 1;
+let flipBook_instance = null;
 const slots    = [];
 const rendered = new Set();
 
@@ -1119,9 +1184,93 @@ updateNav(1);
 
 // Navigate to #pag=N if present in URL
 const hashMatch = initialHash.match(/^#pag=(\d+)$/);
-if (hashMatch) {
-  const target = parseInt(hashMatch[1]);
-  if (target > 1 && target <= totalPages) goTo(target);
+const hashTarget = hashMatch ? parseInt(hashMatch[1]) : 1;
+if (hashTarget > 1 && hashTarget <= totalPages && IS_MOBILE) goTo(hashTarget);
+
+// ── FLIP BOOK (desktop only) ───────────────────────────────────────
+if (!IS_MOBILE && typeof St !== 'undefined') {
+  document.getElementById('viewer').hidden = true;
+  document.getElementById('flipWrap').hidden = false;
+  document.getElementById('btnPageView').hidden = false;
+  document.getElementById('zoomGroup').hidden = true;
+  document.getElementById('zoomDivider').hidden = true;
+
+  const availH  = window.innerHeight - 52;
+  const flipH   = Math.floor(availH * 0.96);
+  const flipW   = Math.round(flipH / sampleRatio);
+
+  const flipBookEl  = document.getElementById('flipBook');
+  const flipPages   = [];
+  const flipRendered = new Set();
+
+  for (let i = 1; i <= totalPages; i++) {
+    const div    = document.createElement('div');
+    div.className = 'flip-page';
+    const canvas  = document.createElement('canvas');
+    canvas.width  = flipW;
+    canvas.height = flipH;
+    div.appendChild(canvas);
+    flipBookEl.appendChild(div);
+    flipPages.push(canvas);
+  }
+
+  let flipPortrait = false;
+
+  flipBook_instance = new St.PageFlip(flipBookEl, {
+    width: flipW, height: flipH,
+    size: 'fixed',
+    flippingTime: 650,
+    usePortrait: flipPortrait,
+    drawShadow: true,
+    maxShadowOpacity: 0.4,
+    showCover: false,
+    mobileScrollSupport: false,
+    swipeDistance: 40,
+    useMouseEvents: true,
+  });
+
+  flipBook_instance.loadFromHTML(flipBookEl.querySelectorAll('.flip-page'));
+
+  async function renderFlipPage(num) {
+    if (num < 1 || num > totalPages || flipRendered.has(num)) return;
+    flipRendered.add(num);
+    try {
+      const page = await pdf.getPage(num);
+      const scale = flipW / page.getViewport({ scale: 1 }).width;
+      const vp    = page.getViewport({ scale });
+      const cvs   = flipPages[num - 1];
+      cvs.width   = Math.round(vp.width);
+      cvs.height  = Math.round(vp.height);
+      await page.render({ canvasContext: cvs.getContext('2d'), viewport: vp }).promise;
+    } catch(_) { flipRendered.delete(num); }
+  }
+
+  function prerenderAround(n) {
+    for (let i = Math.max(1, n - 5); i <= Math.min(totalPages, n + 5); i++) renderFlipPage(i);
+  }
+
+  flipBook_instance.on('flip', e => {
+    const p = e.data + 1;
+    currentPage = p;
+    updateNav(p);
+    prerenderAround(p);
+  });
+
+  // Prev / Next buttons
+  document.getElementById('flipPrev').addEventListener('click', () => flipBook_instance.flipPrev());
+  document.getElementById('flipNext').addEventListener('click', () => flipBook_instance.flipNext());
+
+  // Single / double page toggle
+  document.getElementById('btnPageView').addEventListener('click', () => {
+    flipPortrait = !flipPortrait;
+    flipBook_instance.updateFromProps({ usePortrait: flipPortrait });
+    document.getElementById('btnPageView').textContent = flipPortrait ? '⊞' : '⊟';
+    document.getElementById('btnPageView').title = flipPortrait ? 'Vista doble pàgina' : 'Vista pàgina única';
+  });
+
+  // Navigate to hash target after flip is ready
+  prerenderAround(hashTarget);
+  if (hashTarget > 1) setTimeout(() => flipBook_instance.flip(hashTarget - 1), 300);
 }
 
 // ── BUILD SIDEBAR GROUP BUTTONS ────────────────────────────────────
@@ -1307,6 +1456,10 @@ function updateNav(n) {
 
 function goTo(n) {
   n = Math.max(1, Math.min(totalPages, n));
+  if (flipBook_instance) {
+    if (flipBook_instance.getCurrentPageIndex() !== n - 1) flipBook_instance.flip(n - 1);
+    return;
+  }
   const dist = Math.abs(n - currentPage);
 
   if (dist > 4) {
