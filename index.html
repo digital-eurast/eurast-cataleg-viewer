@@ -564,13 +564,14 @@
     /* ── FLIP BOOK ── */
     .flip-wrap {
       flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       background: #1e1e1e;
       position: relative;
-      overflow: hidden;
+      overflow: auto;
     }
+    .flip-wrap:not([hidden]) { display: flex; }
+    /* margin:auto centers when it fits and allows scrolling when zoomed */
+    #flipZoom { margin: auto; flex-shrink: 0; overflow: hidden; }
+    #flipSize { position: relative; transform-origin: top left; }
     #flipBook { position: relative; }
     .flip-page {
       background: #fff;
@@ -607,16 +608,17 @@
 
     .btn-page-view {
       background: none;
-      border: 1px solid var(--border);
+      border: none;
       color: var(--grey-md);
-      width: 32px; height: 32px;
-      border-radius: 7px; font-size: 15px;
+      width: 36px; height: 32px;
+      border-radius: 7px;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: all .12s; flex-shrink: 0;
-      font-family: inherit;
     }
     .btn-page-view:hover { background: var(--grey-lt); color: var(--text); }
+    /* [hidden] UA rule doesn't apply to SVG elements */
+    .btn-page-view svg[hidden] { display: none; }
 
     /* ── SUB-PAGE GROUP ── */
     .group-nav-wrap { position: relative; flex-shrink: 0; }
@@ -858,7 +860,18 @@
       <option value="it">IT</option>
       <option value="pt">PT</option>
     </select>
-    <button class="btn-page-view" id="btnPageView" title="Canviar vista" hidden>⊟</button>
+    <button class="btn-page-view" id="btnPageView" title="Canviar a 1 pàgina" hidden>
+      <!-- 2-page spread icon (default): open book -->
+      <svg id="iconSpread" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/>
+        <path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h6z"/>
+      </svg>
+      <!-- 1-page icon (hidden initially): single sheet -->
+      <svg id="iconSingle" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
+        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+    </button>
     <button class="btn-search" id="btnSearch" aria-label="Buscar">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="5.5" cy="5.5" r="4"/><path d="M9 9l3.5 3.5"/>
@@ -904,15 +917,19 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
 
 // ── STATE ──────────────────────────────────────────────────────────
-const IS_MOBILE  = window.innerWidth <= 640 || 'ontouchstart' in window;
-const PRERENDER  = IS_MOBILE ? 1 : 2;
-const UNLOAD_FAR = IS_MOBILE ? 4 : 8;
+// IS_MOBILE is evaluated lazily after the layout wait so that innerWidth
+// reflects the real rendered viewport (not the initial 0 before layout).
+let IS_MOBILE  = window.innerWidth <= 640 || 'ontouchstart' in window;
+let PRERENDER  = IS_MOBILE ? 1 : 2;
+let UNLOAD_FAR = IS_MOBILE ? 4 : 8;
 
 const viewer  = document.getElementById('viewer');
 const sidebar = document.getElementById('sidebar');
 
 let pdf, totalPages, zoom = 1.0, currentPage = 1;
 let flipBook_instance = null;
+let flipGoTo = null;     // assigned in flip-book init; navigates flip mode reliably
+let flipApplyZoom = null; // assigned in flip-book init; applies zoom in flip mode
 const slots    = [];
 const rendered = new Set();
 
@@ -1084,8 +1101,12 @@ function buildSlots() {
   }
 }
 
-// Wait for layout before measuring viewport
+// Wait for layout before measuring viewport — re-evaluate IS_MOBILE here
+// so it reflects the real rendered width, not the pre-layout value of 0
 await new Promise(r => setTimeout(r, 50));
+IS_MOBILE  = window.innerWidth <= 640 || 'ontouchstart' in window;
+PRERENDER  = IS_MOBILE ? 1 : 2;
+UNLOAD_FAR = IS_MOBILE ? 4 : 8;
 buildSlots();
 
 // ── RENDER PAGE INTO SLOT ──────────────────────────────────────────
@@ -1196,14 +1217,12 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
   document.getElementById('viewer').hidden = true;
   document.getElementById('flipWrap').hidden = false;
   document.getElementById('btnPageView').hidden = false;
-  document.getElementById('zoomGroup').hidden = true;
-  document.getElementById('zoomDivider').hidden = true;
 
   const availH  = window.innerHeight - 52;
   const flipH   = Math.floor(availH * 0.96);
   const flipW   = Math.round(flipH / sampleRatio);
 
-  const flipBookEl  = document.getElementById('flipBook');
+  const flipDivs    = [];
   const flipPages   = [];
   const flipRendered = new Set();
 
@@ -1214,17 +1233,44 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
     canvas.width  = flipW;
     canvas.height = flipH;
     div.appendChild(canvas);
-    flipBookEl.appendChild(div);
+    flipDivs.push(div);
     flipPages.push(canvas);
   }
 
   let flipPortrait = false;
 
+  // The library overrides the block element's width with 100%, so mode is
+  // controlled via a sizing wrapper: narrow → portrait, wide → landscape.
+  // StPageFlip recalculates orientation on window resize — no rebuild needed.
+  // #flipZoom carries the LAYOUT size (base × zoom) so the area is scrollable
+  // when zoomed; #flipSize keeps the base size and is visually scaled.
+  const flipBookEl = document.getElementById('flipBook');
+  const flipZoomEl = document.createElement('div');
+  const flipSizeEl = document.createElement('div');
+  flipZoomEl.id = 'flipZoom';
+  flipSizeEl.id = 'flipSize';
+  flipBookEl.parentNode.insertBefore(flipZoomEl, flipBookEl);
+  flipZoomEl.appendChild(flipSizeEl);
+  flipSizeEl.appendChild(flipBookEl);
+
+  function syncFlipZoom() {
+    const baseW = flipPortrait ? flipW : flipW * 2;
+    flipSizeEl.style.width      = baseW + 'px';
+    flipSizeEl.style.height     = flipH + 'px';
+    flipSizeEl.style.transform  = `scale(${zoom})`;
+    flipZoomEl.style.width      = Math.round(baseW * zoom) + 'px';
+    flipZoomEl.style.height     = Math.round(flipH * zoom) + 'px';
+  }
+  syncFlipZoom();
+  flipApplyZoom = syncFlipZoom;
+
+  flipDivs.forEach(d => flipBookEl.appendChild(d));
+
   flipBook_instance = new St.PageFlip(flipBookEl, {
     width: flipW, height: flipH,
     size: 'fixed',
     flippingTime: 650,
-    usePortrait: flipPortrait,
+    usePortrait: true,
     drawShadow: true,
     maxShadowOpacity: 0.4,
     showCover: false,
@@ -1235,12 +1281,22 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
 
   flipBook_instance.loadFromHTML(flipBookEl.querySelectorAll('.flip-page'));
 
+  flipBook_instance.on('flip', () => {
+    const p = flipBook_instance.getCurrentPageIndex() + 1;
+    currentPage = p;
+    updateNav(p);
+    prerenderAround(p);
+  });
+
+  // Render above screen size so CSS-transform zoom stays sharp
+  const FLIP_RENDER_QUALITY = Math.min(2, Math.max(window.devicePixelRatio || 1, 1.5));
+
   async function renderFlipPage(num) {
     if (num < 1 || num > totalPages || flipRendered.has(num)) return;
     flipRendered.add(num);
     try {
       const page = await pdf.getPage(num);
-      const scale = flipW / page.getViewport({ scale: 1 }).width;
+      const scale = (flipW / page.getViewport({ scale: 1 }).width) * FLIP_RENDER_QUALITY;
       const vp    = page.getViewport({ scale });
       const cvs   = flipPages[num - 1];
       cvs.width   = Math.round(vp.width);
@@ -1253,28 +1309,43 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
     for (let i = Math.max(1, n - 5); i <= Math.min(totalPages, n + 5); i++) renderFlipPage(i);
   }
 
-  flipBook_instance.on('flip', () => {
-    const p = flipBook_instance.getCurrentPageIndex() + 1;
-    currentPage = p;
-    updateNav(p);
-    prerenderAround(p);
-  });
+  // Programmatic jumps use turnToPage (instant, deterministic — flip(idx)
+  // misbehaves on arbitrary targets) and then sync nav state back from the
+  // library, since the spread base index is its source of truth.
+  flipGoTo = (n) => {
+    prerenderAround(n);
+    if (flipBook_instance.getCurrentPageIndex() !== n - 1) {
+      flipBook_instance.turnToPage(n - 1);
+    }
+    setTimeout(() => {
+      const base1 = flipBook_instance.getCurrentPageIndex() + 1; // left page of spread
+      // Keep the requested page when it's within the visible spread
+      const p = (n === base1 || n === base1 + 1) ? n : base1;
+      currentPage = p;
+      updateNav(p);
+    }, 60);
+  };
 
   // Prev / Next buttons
   document.getElementById('flipPrev').addEventListener('click', () => flipBook_instance.flipPrev());
   document.getElementById('flipNext').addEventListener('click', () => flipBook_instance.flipNext());
 
-  // Single / double page toggle
+  // Single / double page toggle — resize the wrapper and let the library
+  // recalculate its orientation (portrait = single, landscape = double)
   document.getElementById('btnPageView').addEventListener('click', () => {
     flipPortrait = !flipPortrait;
-    flipBook_instance.updateFromProps({ usePortrait: flipPortrait });
-    document.getElementById('btnPageView').textContent = flipPortrait ? '⊞' : '⊟';
-    document.getElementById('btnPageView').title = flipPortrait ? 'Vista doble pàgina' : 'Vista pàgina única';
+    syncFlipZoom();
+    window.dispatchEvent(new Event('resize'));
+    const btn = document.getElementById('btnPageView');
+    // SVG elements lack the .hidden IDL property — toggle the attribute
+    document.getElementById('iconSpread').toggleAttribute('hidden',  flipPortrait);
+    document.getElementById('iconSingle').toggleAttribute('hidden', !flipPortrait);
+    btn.title = flipPortrait ? 'Canviar a 2 pàgines' : 'Canviar a 1 pàgina';
   });
 
   // Navigate to hash target after flip is ready
   prerenderAround(hashTarget);
-  if (hashTarget > 1) setTimeout(() => flipBook_instance.flip(hashTarget - 1), 300);
+  if (hashTarget > 1) setTimeout(() => flipGoTo(hashTarget), 300);
 }
 
 // ── BUILD SIDEBAR GROUP BUTTONS ────────────────────────────────────
@@ -1425,13 +1496,16 @@ sidebar.addEventListener('click', e => {
   if (e.target.closest('.nav-item')) closeSidebar();
 });
 
-// ── RENDER INITIAL PAGES ───────────────────────────────────────────
-try {
-  await renderSlot(1);
-} catch(e) { console.warn('renderSlot 1:', e); }
-renderSlot(2).catch(() => {});
-
-setTimeout(() => { observerReady = true; }, 300);
+// ── RENDER INITIAL PAGES (scroll viewer only) ──────────────────────
+// In flip mode the scroll viewer is hidden — rendering it is wasted work,
+// and awaiting it here can stall the rest of the init (nav listeners etc.)
+if (!flipGoTo) {
+  try {
+    await renderSlot(1);
+  } catch(e) { console.warn('renderSlot 1:', e); }
+  renderSlot(2).catch(() => {});
+  setTimeout(() => { observerReady = true; }, 300);
+}
 
 // ── ACTIVE GROUP HIGHLIGHT ─────────────────────────────────────────
 function updateActiveGroup(pageNum) {
@@ -1460,10 +1534,7 @@ function updateNav(n) {
 
 function goTo(n) {
   n = Math.max(1, Math.min(totalPages, n));
-  if (flipBook_instance) {
-    if (flipBook_instance.getCurrentPageIndex() !== n - 1) flipBook_instance.flip(n - 1);
-    return;
-  }
+  if (flipGoTo) { flipGoTo(n); return; }
   const dist = Math.abs(n - currentPage);
 
   if (dist > 4) {
@@ -1487,15 +1558,29 @@ function goTo(n) {
   }
 }
 
-document.getElementById('btnPrev').addEventListener('click', () => goTo(currentPage - 1));
-document.getElementById('btnNext').addEventListener('click', () => goTo(currentPage + 1));
+document.getElementById('btnPrev').addEventListener('click', () => {
+  if (flipBook_instance) flipBook_instance.flipPrev(); else goTo(currentPage - 1);
+});
+document.getElementById('btnNext').addEventListener('click', () => {
+  if (flipBook_instance) flipBook_instance.flipNext(); else goTo(currentPage + 1);
+});
 document.getElementById('pageInput').addEventListener('change', e => goTo(parseInt(e.target.value) || 1));
+
+// Navigate when the user edits #pag=N in the URL bar (replaceState from
+// updateNav doesn't fire hashchange, so this only reacts to manual edits)
+window.addEventListener('hashchange', () => {
+  const m = location.hash.match(/^#pag=(\d+)$/);
+  if (!m) return;
+  const n = parseInt(m[1]);
+  if (n >= 1 && n <= totalPages && n !== currentPage) goTo(n);
+});
 
 // ── ZOOM ───────────────────────────────────────────────────────────
 let zoomTimer = null;
 
 function applyZoom() {
   document.getElementById('zoomLbl').textContent = Math.round(zoom * 100) + '%';
+  if (flipApplyZoom) { flipApplyZoom(); return; }
   const w = calcPageWidth();
   slots.forEach(s => {
     s.style.width  = w + 'px';
@@ -1551,8 +1636,12 @@ document.addEventListener('keydown', e => {
   }
   if (!document.getElementById('leadModal').hidden) return;
   if (!document.getElementById('searchOverlay').hidden) return;
-  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(currentPage + 1);
-  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   goTo(currentPage - 1);
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    if (flipBook_instance) flipBook_instance.flipNext(); else goTo(currentPage + 1);
+  }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    if (flipBook_instance) flipBook_instance.flipPrev(); else goTo(currentPage - 1);
+  }
 });
 
 // ── SUB-PAGE NAVIGATION ────────────────────────────────────────────
