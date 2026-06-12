@@ -860,14 +860,28 @@
       <option value="it">IT</option>
       <option value="pt">PT</option>
     </select>
-    <button class="btn-page-view" id="btnPageView" title="Canviar a 1 pàgina" hidden>
-      <!-- 2-page spread icon (default): open book -->
-      <svg id="iconSpread" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- flip mode toggle: shown on desktop when library loaded -->
+    <button class="btn-page-view" id="btnFlipMode" title="Vista de llibre animat" hidden>
+      <!-- closed-book icon: visible in scroll mode (to enter flip) -->
+      <svg id="iconBook" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </svg>
+      <!-- list icon: visible in flip mode (to exit) -->
+      <svg id="iconList" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
+        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+        <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+      </svg>
+    </button>
+    <!-- 1/2-page toggle: only shown when in flip mode -->
+    <button class="btn-page-view" id="btnPageView" title="Canviar a 2 pàgines" hidden>
+      <!-- 2-page spread icon: visible when in 1-page mode (will switch to 2) — hidden initially -->
+      <svg id="iconSpread" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
         <path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/>
         <path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h6z"/>
       </svg>
-      <!-- 1-page icon (hidden initially): single sheet -->
-      <svg id="iconSingle" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
+      <!-- 1-page icon: visible when in 1-page mode — shown initially -->
+      <svg id="iconSingle" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
         <polyline points="14 2 14 8 20 8"/>
       </svg>
@@ -930,6 +944,7 @@ let pdf, totalPages, zoom = 1.0, currentPage = 1;
 let flipBook_instance = null;
 let flipGoTo = null;     // assigned in flip-book init; navigates flip mode reliably
 let flipApplyZoom = null; // assigned in flip-book init; applies zoom in flip mode
+let flipModeActive = false;
 const slots    = [];
 const rendered = new Set();
 
@@ -1206,17 +1221,11 @@ updateNav(1);
 // Navigate to #pag=N if present in URL
 const hashMatch = initialHash.match(/^#pag=(\d+)$/);
 const hashTarget = hashMatch ? parseInt(hashMatch[1]) : 1;
-if (hashTarget > 1 && hashTarget <= totalPages && IS_MOBILE) goTo(hashTarget);
+if (hashTarget > 1 && hashTarget <= totalPages) goTo(hashTarget);
 
-// ── FLIP BOOK (desktop only) ───────────────────────────────────────
+// ── FLIP BOOK (desktop only, lazy — scroll is default) ────────────
 if (!IS_MOBILE && typeof St !== 'undefined') {
-  // Stop the scroll-viewer observer — it must not interfere with flip mode
-  pageObs.disconnect();
-  observerReady = false;
-
-  document.getElementById('viewer').hidden = true;
-  document.getElementById('flipWrap').hidden = false;
-  document.getElementById('btnPageView').hidden = false;
+  document.getElementById('btnFlipMode').hidden = false;
 
   const availH  = window.innerHeight - 52;
   const flipH   = Math.floor(availH * 0.96);
@@ -1237,7 +1246,7 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
     flipPages.push(canvas);
   }
 
-  let flipPortrait = false;
+  let flipPortrait = true;
 
   // The library overrides the block element's width with 100%, so mode is
   // controlled via a sizing wrapper: narrow → portrait, wide → landscape.
@@ -1266,27 +1275,33 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
 
   flipDivs.forEach(d => flipBookEl.appendChild(d));
 
-  flipBook_instance = new St.PageFlip(flipBookEl, {
-    width: flipW, height: flipH,
-    size: 'fixed',
-    flippingTime: 650,
-    usePortrait: true,
-    drawShadow: true,
-    maxShadowOpacity: 0.4,
-    showCover: false,
-    mobileScrollSupport: false,
-    swipeDistance: 40,
-    useMouseEvents: true,
-  });
-
-  flipBook_instance.loadFromHTML(flipBookEl.querySelectorAll('.flip-page'));
-
-  flipBook_instance.on('flip', () => {
-    const p = flipBook_instance.getCurrentPageIndex() + 1;
-    currentPage = p;
-    updateNav(p);
-    prerenderAround(p);
-  });
+  // The StPageFlip instance must be created while its container is VISIBLE and
+  // sized — otherwise it measures 0px and the 1/2-page orientation toggle never
+  // recalculates. So we build it lazily on first entry into flip mode.
+  let flipInited = false;
+  function ensureFlipInit() {
+    if (flipInited) return;
+    flipInited = true;
+    flipBook_instance = new St.PageFlip(flipBookEl, {
+      width: flipW, height: flipH,
+      size: 'fixed',
+      flippingTime: 650,
+      usePortrait: true,
+      drawShadow: true,
+      maxShadowOpacity: 0.4,
+      showCover: false,
+      mobileScrollSupport: false,
+      swipeDistance: 40,
+      useMouseEvents: true,
+    });
+    flipBook_instance.loadFromHTML(flipBookEl.querySelectorAll('.flip-page'));
+    flipBook_instance.on('flip', () => {
+      const p = flipBook_instance.getCurrentPageIndex() + 1;
+      currentPage = p;
+      updateNav(p);
+      prerenderAround(p);
+    });
+  }
 
   // Render above screen size so CSS-transform zoom stays sharp
   const FLIP_RENDER_QUALITY = Math.min(2, Math.max(window.devicePixelRatio || 1, 1.5));
@@ -1343,9 +1358,44 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
     btn.title = flipPortrait ? 'Canviar a 2 pàgines' : 'Canviar a 1 pàgina';
   });
 
-  // Navigate to hash target after flip is ready
-  prerenderAround(hashTarget);
-  if (hashTarget > 1) setTimeout(() => flipGoTo(hashTarget), 300);
+  // ── FLIP MODE ACTIVATE / DEACTIVATE ─────────────────────────────
+  function activateFlipMode() {
+    flipModeActive = true;
+    pageObs.disconnect();
+    observerReady = false;
+    const target = currentPage;
+    document.getElementById('viewer').hidden = true;
+    document.getElementById('flipWrap').hidden = false;
+    document.getElementById('btnPageView').hidden = false;
+    document.getElementById('iconBook').toggleAttribute('hidden', true);
+    document.getElementById('iconList').toggleAttribute('hidden', false);
+    document.getElementById('btnFlipMode').title = 'Tornar a vista normal';
+    syncFlipZoom();
+    // Container is now visible & sized → safe to build the flip book
+    ensureFlipInit();
+    // Let StPageFlip measure the now-visible container before navigating
+    window.dispatchEvent(new Event('resize'));
+    prerenderAround(target);
+    setTimeout(() => flipGoTo(target), 60);
+  }
+
+  function activateScrollMode() {
+    flipModeActive = false;
+    document.getElementById('viewer').hidden = false;
+    document.getElementById('flipWrap').hidden = true;
+    document.getElementById('btnPageView').hidden = true;
+    document.getElementById('iconBook').toggleAttribute('hidden', false);
+    document.getElementById('iconList').toggleAttribute('hidden', true);
+    document.getElementById('btnFlipMode').title = 'Vista de llibre animat';
+    slots.forEach(s => pageObs.observe(s));
+    observerReady = false;
+    goTo(currentPage);
+    setTimeout(() => { observerReady = true; }, 400);
+  }
+
+  document.getElementById('btnFlipMode').addEventListener('click', () => {
+    if (flipModeActive) activateScrollMode(); else activateFlipMode();
+  });
 }
 
 // ── BUILD SIDEBAR GROUP BUTTONS ────────────────────────────────────
@@ -1499,7 +1549,7 @@ sidebar.addEventListener('click', e => {
 // ── RENDER INITIAL PAGES (scroll viewer only) ──────────────────────
 // In flip mode the scroll viewer is hidden — rendering it is wasted work,
 // and awaiting it here can stall the rest of the init (nav listeners etc.)
-if (!flipGoTo) {
+if (!flipModeActive) {
   try {
     await renderSlot(1);
   } catch(e) { console.warn('renderSlot 1:', e); }
@@ -1534,7 +1584,7 @@ function updateNav(n) {
 
 function goTo(n) {
   n = Math.max(1, Math.min(totalPages, n));
-  if (flipGoTo) { flipGoTo(n); return; }
+  if (flipModeActive && flipGoTo) { flipGoTo(n); return; }
   const dist = Math.abs(n - currentPage);
 
   if (dist > 4) {
@@ -1559,10 +1609,10 @@ function goTo(n) {
 }
 
 document.getElementById('btnPrev').addEventListener('click', () => {
-  if (flipBook_instance) flipBook_instance.flipPrev(); else goTo(currentPage - 1);
+  if (flipModeActive && flipBook_instance) flipBook_instance.flipPrev(); else goTo(currentPage - 1);
 });
 document.getElementById('btnNext').addEventListener('click', () => {
-  if (flipBook_instance) flipBook_instance.flipNext(); else goTo(currentPage + 1);
+  if (flipModeActive && flipBook_instance) flipBook_instance.flipNext(); else goTo(currentPage + 1);
 });
 document.getElementById('pageInput').addEventListener('change', e => goTo(parseInt(e.target.value) || 1));
 
@@ -1580,7 +1630,7 @@ let zoomTimer = null;
 
 function applyZoom() {
   document.getElementById('zoomLbl').textContent = Math.round(zoom * 100) + '%';
-  if (flipApplyZoom) { flipApplyZoom(); return; }
+  if (flipModeActive && flipApplyZoom) { flipApplyZoom(); return; }
   const w = calcPageWidth();
   slots.forEach(s => {
     s.style.width  = w + 'px';
@@ -1613,6 +1663,7 @@ document.getElementById('btnZoomOut').addEventListener('click', () => {
 // ── RESIZE ────────────────────────────────────────────────────────
 let resizeTimer;
 window.addEventListener('resize', () => {
+  if (flipModeActive) return; // flip handles its own resize via syncFlipZoom
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
     rendered.clear();
@@ -1637,10 +1688,10 @@ document.addEventListener('keydown', e => {
   if (!document.getElementById('leadModal').hidden) return;
   if (!document.getElementById('searchOverlay').hidden) return;
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-    if (flipBook_instance) flipBook_instance.flipNext(); else goTo(currentPage + 1);
+    if (flipModeActive && flipBook_instance) flipBook_instance.flipNext(); else goTo(currentPage + 1);
   }
   if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-    if (flipBook_instance) flipBook_instance.flipPrev(); else goTo(currentPage - 1);
+    if (flipModeActive && flipBook_instance) flipBook_instance.flipPrev(); else goTo(currentPage - 1);
   }
 });
 
