@@ -861,7 +861,7 @@
       <option value="pt">PT</option>
     </select>
     <!-- flip mode toggle: shown on desktop when library loaded -->
-    <button class="btn-page-view" id="btnFlipMode" title="Vista de llibre animat" hidden>
+    <button class="btn-page-view" id="btnFlipMode" title="Vista de libro animado" hidden>
       <!-- closed-book icon: visible in scroll mode (to enter flip) -->
       <svg id="iconBook" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
@@ -874,7 +874,7 @@
       </svg>
     </button>
     <!-- 1/2-page toggle: only shown when in flip mode -->
-    <button class="btn-page-view" id="btnPageView" title="Canviar a 2 pàgines" hidden>
+    <button class="btn-page-view" id="btnPageView" title="Cambiar a 2 páginas" hidden>
       <!-- 2-page spread icon: visible when in 1-page mode (will switch to 2) — hidden initially -->
       <svg id="iconSpread" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
         <path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/>
@@ -968,6 +968,18 @@ const STRINGS = {
       submit: '↓ Descargar PDF', sending: 'Enviando...',
       privacyHtml: 'He leído y acepto la <a href="https://eurast.com/es/apartado/5-politica-de-privacidad/" target="_blank" rel="noopener">política de privacidad</a> y acepto recibir comunicaciones comerciales',
     },
+    search: {
+      ariaSearch: 'Buscar', ariaClose: 'Cerrar',
+      placeholder: 'Buscar referencia, modelo o descripción...',
+      indexing: 'Indexando…', indexingShort: 'indexando',
+      indexedSuffix: 'páginas indexadas · escribe para buscar',
+      noResults: 'Sin resultados', resultOne: 'resultado', resultMany: 'resultados',
+      pageAbbr: 'Pág.',
+    },
+    flip: {
+      enter: 'Vista de libro animado', exit: 'Volver a vista normal',
+      to2: 'Cambiar a 2 páginas', to1: 'Cambiar a 1 página',
+    },
   },
   en: {
     navLabel: 'Groups', headerSub: 'RCR Complete Price List', download: '↓ Download PDF', contact: 'Contact',
@@ -979,6 +991,18 @@ const STRINGS = {
       companyLabel: 'Company', companyPh: 'Your company name',
       submit: '↓ Download PDF', sending: 'Sending...',
       privacyHtml: 'I have read and accept the <a href="https://eurast.com/es/apartado/5-politica-de-privacidad/" target="_blank" rel="noopener">privacy policy</a> and agree to receive commercial communications',
+    },
+    search: {
+      ariaSearch: 'Search', ariaClose: 'Close',
+      placeholder: 'Search reference, model or description...',
+      indexing: 'Indexing…', indexingShort: 'indexing',
+      indexedSuffix: 'pages indexed · type to search',
+      noResults: 'No results', resultOne: 'result', resultMany: 'results',
+      pageAbbr: 'Page',
+    },
+    flip: {
+      enter: 'Animated book view', exit: 'Back to normal view',
+      to2: 'Switch to 2 pages', to1: 'Switch to 1 page',
     },
   },
   fr: {
@@ -992,6 +1016,18 @@ const STRINGS = {
       submit: '↓ Télécharger PDF', sending: 'Envoi en cours...',
       privacyHtml: "J'ai lu et j'accepte la <a href=\"https://eurast.com/es/apartado/5-politica-de-privacidad/\" target=\"_blank\" rel=\"noopener\">politique de confidentialité</a> et j'accepte de recevoir des communications commerciales",
     },
+    search: {
+      ariaSearch: 'Rechercher', ariaClose: 'Fermer',
+      placeholder: 'Rechercher référence, modèle ou description...',
+      indexing: 'Indexation…', indexingShort: 'indexation',
+      indexedSuffix: 'pages indexées · tapez pour rechercher',
+      noResults: 'Aucun résultat', resultOne: 'résultat', resultMany: 'résultats',
+      pageAbbr: 'Page',
+    },
+    flip: {
+      enter: 'Vue livre animé', exit: 'Retour à la vue normale',
+      to2: 'Passer à 2 pages', to1: 'Passer à 1 page',
+    },
   },
   de: {
     navLabel: 'Gruppen', headerSub: 'RCR Vollständiger Preiskatalog', download: '↓ PDF herunterladen', contact: 'Kontakt',
@@ -1003,6 +1039,18 @@ const STRINGS = {
       companyLabel: 'Unternehmen', companyPh: 'Name Ihres Unternehmens',
       submit: '↓ PDF herunterladen', sending: 'Wird gesendet...',
       privacyHtml: 'Ich habe die <a href="https://eurast.com/es/apartado/5-politica-de-privacidad/" target="_blank" rel="noopener">Datenschutzerklärung</a> gelesen, akzeptiere sie und stimme dem Erhalt von Werbemitteilungen zu',
+    },
+    search: {
+      ariaSearch: 'Suchen', ariaClose: 'Schließen',
+      placeholder: 'Referenz, Modell oder Beschreibung suchen...',
+      indexing: 'Indexierung…', indexingShort: 'Indexierung',
+      indexedSuffix: 'Seiten indexiert · zum Suchen tippen',
+      noResults: 'Keine Ergebnisse', resultOne: 'Ergebnis', resultMany: 'Ergebnisse',
+      pageAbbr: 'Seite',
+    },
+    flip: {
+      enter: 'Animierte Buchansicht', exit: 'Zurück zur normalen Ansicht',
+      to2: 'Auf 2 Seiten umschalten', to1: 'Auf 1 Seite umschalten',
     },
   },
   it: {
@@ -1016,6 +1064,18 @@ const STRINGS = {
       submit: '↓ Scarica PDF', sending: 'Invio in corso...',
       privacyHtml: 'Ho letto e accetto la <a href="https://eurast.com/es/apartado/5-politica-de-privacidad/" target="_blank" rel="noopener">informativa sulla privacy</a> e acconsento a ricevere comunicazioni commerciali',
     },
+    search: {
+      ariaSearch: 'Cerca', ariaClose: 'Chiudi',
+      placeholder: 'Cerca referenza, modello o descrizione...',
+      indexing: 'Indicizzazione…', indexingShort: 'indicizzazione',
+      indexedSuffix: 'pagine indicizzate · digita per cercare',
+      noResults: 'Nessun risultato', resultOne: 'risultato', resultMany: 'risultati',
+      pageAbbr: 'Pag.',
+    },
+    flip: {
+      enter: 'Vista libro animato', exit: 'Torna alla vista normale',
+      to2: 'Passa a 2 pagine', to1: 'Passa a 1 pagina',
+    },
   },
   pt: {
     navLabel: 'Grupos', headerSub: 'Catálogo Preços RCR Completo', download: '↓ Descarregar PDF', contact: 'Contacto',
@@ -1027,6 +1087,18 @@ const STRINGS = {
       companyLabel: 'Empresa', companyPh: 'Nome da sua empresa',
       submit: '↓ Descarregar PDF', sending: 'A enviar...',
       privacyHtml: 'Li e aceito a <a href="https://eurast.com/es/apartado/5-politica-de-privacidad/" target="_blank" rel="noopener">política de privacidade</a> e aceito receber comunicações comerciais',
+    },
+    search: {
+      ariaSearch: 'Procurar', ariaClose: 'Fechar',
+      placeholder: 'Procurar referência, modelo ou descrição...',
+      indexing: 'A indexar…', indexingShort: 'a indexar',
+      indexedSuffix: 'páginas indexadas · escreva para procurar',
+      noResults: 'Sem resultados', resultOne: 'resultado', resultMany: 'resultados',
+      pageAbbr: 'Pág.',
+    },
+    flip: {
+      enter: 'Vista de livro animado', exit: 'Voltar à vista normal',
+      to2: 'Mudar para 2 páginas', to1: 'Mudar para 1 página',
     },
   },
 };
@@ -1355,7 +1427,7 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
     // SVG elements lack the .hidden IDL property — toggle the attribute
     document.getElementById('iconSpread').toggleAttribute('hidden',  flipPortrait);
     document.getElementById('iconSingle').toggleAttribute('hidden', !flipPortrait);
-    btn.title = flipPortrait ? 'Canviar a 2 pàgines' : 'Canviar a 1 pàgina';
+    btn.title = flipPortrait ? STRINGS[currentLang].flip.to2 : STRINGS[currentLang].flip.to1;
   });
 
   // ── FLIP MODE ACTIVATE / DEACTIVATE ─────────────────────────────
@@ -1369,7 +1441,7 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
     document.getElementById('btnPageView').hidden = false;
     document.getElementById('iconBook').toggleAttribute('hidden', true);
     document.getElementById('iconList').toggleAttribute('hidden', false);
-    document.getElementById('btnFlipMode').title = 'Tornar a vista normal';
+    document.getElementById('btnFlipMode').title = STRINGS[currentLang].flip.exit;
     syncFlipZoom();
     // Container is now visible & sized → safe to build the flip book
     ensureFlipInit();
@@ -1386,7 +1458,7 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
     document.getElementById('btnPageView').hidden = true;
     document.getElementById('iconBook').toggleAttribute('hidden', false);
     document.getElementById('iconList').toggleAttribute('hidden', true);
-    document.getElementById('btnFlipMode').title = 'Vista de llibre animat';
+    document.getElementById('btnFlipMode').title = STRINGS[currentLang].flip.enter;
     slots.forEach(s => pageObs.observe(s));
     observerReady = false;
     goTo(currentPage);
@@ -1421,6 +1493,24 @@ function setLang(lang) {
     const btn = document.getElementById(`nav-${g.id}`);
     if (btn) btn.querySelector('.nav-name').textContent = g[lang];
   });
+  // Search controls
+  const sx = STRINGS[lang].search;
+  document.getElementById('btnSearch').setAttribute('aria-label', sx.ariaSearch);
+  document.getElementById('btnSearchClose').setAttribute('aria-label', sx.ariaClose);
+  document.getElementById('modalClose').setAttribute('aria-label', sx.ariaClose);
+  document.getElementById('searchTextInput').placeholder = sx.placeholder;
+  // Flip-book toggle tooltips (reflect current mode)
+  const fx = STRINGS[lang].flip;
+  document.getElementById('btnFlipMode').title = flipModeActive ? fx.exit : fx.enter;
+  const pvBtn = document.getElementById('btnPageView');
+  // iconSingle visible (not hidden) means we're in 1-page mode → next switches to 2
+  const inSinglePage = !document.getElementById('iconSingle').hasAttribute('hidden');
+  pvBtn.title = inSinglePage ? fx.to2 : fx.to1;
+  // Refresh search status / results if the overlay is open
+  if (!document.getElementById('searchOverlay').hidden) {
+    const q = document.getElementById('searchTextInput').value;
+    if (q.trim().length >= 2) doSearch(q); else renderSearchStatus(q);
+  }
   updateModal(lang);
   updateSubPage(currentPage);
 }
@@ -1864,14 +1954,15 @@ async function buildSearchIndex() {
 function renderSearchStatus(query) {
   const el = document.getElementById('searchStatus');
   if (!el) return;
+  const s = STRINGS[currentLang].search;
   if (isIndexing) {
     const pct = Math.round(indexedCount / totalPages * 100);
     el.innerHTML = `<div class="search-index-wrap">
-      <span>Indexant… ${indexedCount}/${totalPages}</span>
+      <span>${s.indexing} ${indexedCount}/${totalPages}</span>
       <div class="search-index-bar"><div class="search-index-fill" style="width:${pct}%"></div></div>
     </div>`;
   } else if (!query || query.length < 2) {
-    el.textContent = indexedCount > 0 ? `${indexedCount} pàgines indexades · escriu per buscar` : '';
+    el.textContent = indexedCount > 0 ? `${indexedCount} ${s.indexedSuffix}` : '';
   }
 }
 
@@ -1914,14 +2005,16 @@ function doSearch(query) {
   }
   hits.sort((a, b) => a.page - b.page);
 
+  const s = STRINGS[currentLang].search;
+  const resultWord = hits.length === 1 ? s.resultOne : s.resultMany;
   if (isIndexing) {
     const pct = Math.round(indexedCount / totalPages * 100);
     statusEl.innerHTML = `<div class="search-index-wrap">
-      <span><strong>${hits.length}</strong> resultats (indexant ${pct}%…)</span>
+      <span><strong>${hits.length}</strong> ${resultWord} (${s.indexingShort} ${pct}%…)</span>
       <div class="search-index-bar"><div class="search-index-fill" style="width:${pct}%"></div></div>
     </div>`;
   } else {
-    statusEl.textContent = hits.length === 0 ? 'Cap resultat' : `${hits.length} resultat${hits.length !== 1 ? 's' : ''}`;
+    statusEl.textContent = hits.length === 0 ? s.noResults : `${hits.length} ${resultWord}`;
   }
 
   resultsEl.innerHTML = '';
@@ -1932,7 +2025,7 @@ function doSearch(query) {
     const safe = h.raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const snip = safe.slice(0, h.mo) + `<mark>${safe.slice(h.mo, h.mo + h.mLen)}</mark>` + safe.slice(h.mo + h.mLen);
     btn.innerHTML = `<span class="search-result-badge">${g.id}</span>
-      <span class="search-result-page">Pàg. ${h.page}</span>
+      <span class="search-result-page">${s.pageAbbr} ${h.page}</span>
       <span class="search-result-snippet">${snip}</span>`;
     btn.addEventListener('click', () => { goTo(h.page); closeSearch(); });
     resultsEl.appendChild(btn);
