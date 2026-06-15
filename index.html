@@ -1297,6 +1297,10 @@ const hashMatch = initialHash.match(/^#pag=(\d+)$/);
 const hashTarget = hashMatch ? parseInt(hashMatch[1]) : 1;
 if (hashTarget > 1 && hashTarget <= totalPages) goTo(hashTarget);
 
+// Set initial language from ?lang= URL param (used by per-segment email links)
+const langParam = new URLSearchParams(location.search).get('lang');
+if (langParam && STRINGS[langParam]) setLang(langParam);
+
 // ── FLIP BOOK (desktop only, lazy — scroll is default) ────────────
 if (!IS_MOBILE && typeof St !== 'undefined') {
   document.getElementById('btnFlipMode').hidden = false;
