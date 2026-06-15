@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Catálogo Tarifa — EURAST</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.js"></script>
@@ -1476,7 +1478,14 @@ GROUPS.forEach((g, idx) => {
   btn.className = 'nav-item' + (idx === 0 ? ' active' : '');
   btn.id        = `nav-${g.id}`;
   btn.innerHTML = `<span class="nav-badge">${g.id}</span><span class="nav-name">${g[currentLang]}</span>`;
-  btn.addEventListener('click', () => goTo(g.page));
+  btn.addEventListener('click', () => {
+    goTo(g.page);
+    // Reveal the top group-nav dropdown (at this group's page view) so the
+    // user discovers they can also pick a page from the toolbar. Deferred so
+    // the document-level "click outside → close" handler (which fires on this
+    // same click) runs first and doesn't immediately close it again.
+    setTimeout(() => openGroupDropdownAtGroup(idx), 0);
+  });
   sidebar.appendChild(btn);
 });
 
@@ -1829,7 +1838,7 @@ function buildDropGroupList() {
   });
 }
 
-function openDropStep2(groupIdx) {
+function openDropStep2(groupIdx, focusInput = true) {
   dropSelectedGroupIdx = groupIdx;
   const g = GROUPS[groupIdx];
   const endPage = groupIdx + 1 < GROUPS.length ? GROUPS[groupIdx + 1].page - 1 : totalPages;
@@ -1841,7 +1850,15 @@ function openDropStep2(groupIdx) {
   document.getElementById('dropGoBtn').textContent       = DROP_GO[currentLang];
   const inp = document.getElementById('dropPageNum');
   inp.max = total; inp.value = 1;
-  setTimeout(() => { inp.focus(); inp.select(); }, 50);
+  // Skip auto-focus on mobile so we don't pop the on-screen keyboard
+  if (focusInput) setTimeout(() => { inp.focus(); inp.select(); }, 50);
+}
+
+// Open the toolbar group dropdown directly at a group's page view (step 2).
+// Used by the left index so clicking a group also reveals the top page picker.
+function openGroupDropdownAtGroup(groupIdx) {
+  document.getElementById('groupDropdown').hidden = false;
+  openDropStep2(groupIdx, !IS_MOBILE);
 }
 
 function openGroupDropdown() {
