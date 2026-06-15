@@ -1106,6 +1106,15 @@ const STRINGS = {
 };
 let currentLang = 'es';
 
+// Apply ?lang= as early as possible so the loading overlay shows in the
+// right language (setLang runs later, after the PDF is parsed).
+const _urlLang = new URLSearchParams(location.search).get('lang');
+if (_urlLang && STRINGS[_urlLang]) {
+  currentLang = _urlLang;
+  const _lsub = document.getElementById('loading-sub');
+  if (_lsub) _lsub.textContent = STRINGS[_urlLang].loadingSub;
+}
+
 // ── GROUPS — multilingual, declared at top ─────────────────────────
 const GROUPS = [
   { id: 'G01', page:   2, es: 'Máquinas Bar',       en: 'Bar Machines',             fr: 'Machines Bar',              de: 'Barmaschinen',         it: 'Macchine Bar',                  pt: 'Máquinas Bar' },
@@ -1502,6 +1511,8 @@ function setLang(lang) {
   document.getElementById('header-label').textContent   = STRINGS[lang].headerSub;
   document.getElementById('dl-label').textContent       = STRINGS[lang].download.replace(/^↓\s*/, '');
   document.getElementById('contact-label').textContent  = STRINGS[lang].contact;
+  const loadingSub = document.getElementById('loading-sub');
+  if (loadingSub) loadingSub.textContent = STRINGS[lang].loadingSub;
   GROUPS.forEach(g => {
     const btn = document.getElementById(`nav-${g.id}`);
     if (btn) btn.querySelector('.nav-name').textContent = g[lang];
