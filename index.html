@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Catálogo Tarifa — EURAST</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" href="favicon.ico">
   <link rel="apple-touch-icon" href="logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -159,19 +159,46 @@
 
     /* ── SIDEBAR ── */
     .sidebar {
-      width: 210px;
+      width: 230px;
       flex-shrink: 0;
       background: #fff;
       border-right: 1px solid var(--border);
+      overflow: visible;          /* let the group dropdown overflow */
+      display: flex;
+      flex-direction: column;
+    }
+    /* navigation block at the top of the sidebar (page + group nav) */
+    .side-nav {
+      flex-shrink: 0;
+      padding: 10px 10px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .side-pagenav { width: 100%; justify-content: center; }
+    .side-pagenav #pageInput { width: 46px; }
+    .side-nav .group-nav-wrap { width: 100%; }
+    .side-nav .group-pill { width: 100%; justify-content: center; }
+    /* groups index — the only scrolling part */
+    .side-groups {
+      flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 10px 8px 16px;
+      padding: 10px 8px 12px;
       display: flex;
       flex-direction: column;
       gap: 2px;
     }
-    .sidebar::-webkit-scrollbar { width: 3px; }
-    .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .side-groups::-webkit-scrollbar { width: 3px; }
+    .side-groups::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    /* footer (contact) */
+    .side-footer {
+      flex-shrink: 0;
+      padding: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .side-footer .btn-contact { width: 100%; justify-content: center; }
 
     /* ── LANGUAGE TABS ── */
     .lang-tabs {
@@ -268,6 +295,16 @@
       position: relative;
       contain: layout;
     }
+    /* 2-up (two pages side by side) layout for the normal scroll view */
+    .viewer.two-up {
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      justify-content: center;
+      gap: 18px 30px;   /* row-gap, column-gap (gap = central separation) */
+      padding: 18px;
+    }
+    .viewer.two-up .page-slot { margin: 0; }
     .page-slot canvas {
       position: absolute;
       inset: 0;
@@ -529,8 +566,9 @@
     /* ── MOBILE ─────────────────────────────────────────────────── */
     @media (max-width: 640px) {
       .logo-label { display: none; }
-      #zoomGroup, #zoomDivider { display: none; }
-      #totalWrap { display: none; }
+      #zoomGroup { display: none; }
+      #btnPages { display: none; }
+      #btnFlipMode { display: none; }   /* flip book is desktop-only */
       #dl-label  { display: none; }
       .btn-dl    { padding: 7px 11px; letter-spacing: .02em; }
       .toolbar   { gap: 4px; }
@@ -539,7 +577,7 @@
       .sidebar {
         position: fixed;
         top: 52px; left: 0; bottom: 0;
-        width: 210px;
+        width: 250px;
         z-index: 100;
         transform: translateX(-100%);
         transition: transform .25s ease;
@@ -548,6 +586,10 @@
       .viewer { width: 100%; }
       .sidebar.open { transform: translateX(0); }
       #sidebarBackdrop.open { display: block; }
+      header { padding: 0 8px; }
+      .logo-img { height: 28px; }
+      .hsearch { flex: 1 1 70px; min-width: 64px; max-width: none; margin: 0 6px; height: 34px; }
+      .search-overlay { width: 96vw; }
 
       .modal-overlay { align-items: flex-end; padding: 0; }
       .modal-box {
@@ -574,6 +616,15 @@
     /* margin:auto centers when it fits and allows scrolling when zoomed */
     #flipZoom { margin: auto; flex-shrink: 0; overflow: hidden; }
     #flipSize { position: relative; transform-origin: top left; }
+    /* central separation between left/right page in the 2-page flip spread */
+    #flipSize.spread::after {
+      content: '';
+      position: absolute; top: 0; bottom: 0; left: 50%;
+      width: 2px; transform: translateX(-1px);
+      background: rgba(0,0,0,0.18);
+      box-shadow: 0 0 22px 9px rgba(0,0,0,0.28);
+      pointer-events: none; z-index: 4;
+    }
     #flipBook { position: relative; }
     .flip-page {
       background: #fff;
@@ -696,20 +747,77 @@
     .btn-search:hover { background: var(--grey-lt); color: var(--text); }
     .btn-search.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
+    /* ── FAVORITES ── */
+    .btn-fav { position: relative; }
+    .btn-fav.has-favs { color: var(--primary); border-color: var(--primary); }
+    .fav-count {
+      position: absolute; top: -6px; right: -6px;
+      background: var(--primary); color: #fff;
+      font-size: 9px; font-weight: 800; line-height: 1;
+      min-width: 15px; height: 15px; padding: 0 3px;
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    }
+    .fav-count[hidden] { display: none; }
+    .fav-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 2px 2px 10px;
+    }
+    .fav-hdr-title { font-size: 13px; font-weight: 700; color: var(--text); }
+    /* star toggle inside a result row */
+    .fav-star {
+      flex-shrink: 0; cursor: pointer; padding: 3px 4px; margin-left: 4px;
+      color: var(--grey-md); line-height: 1; border-radius: 5px;
+      transition: color .12s, background .12s;
+    }
+    .fav-star svg { display: block; }
+    .fav-star:hover { background: var(--grey-lt); color: var(--primary); }
+    .fav-star.on { color: var(--primary); }
+
     /* ── SEARCH OVERLAY ── */
+    /* always-visible search bar in the header */
+    .hsearch {
+      flex: 1 1 auto;
+      max-width: 600px;
+      margin: 0 16px;   /* grows to fill the space between logo and toolbar */
+      display: flex; align-items: center; gap: 8px;
+      height: 36px; padding: 0 12px;
+      background: var(--grey-lt);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--grey-md);
+      transition: border-color .12s, background .12s;
+    }
+    .hsearch:focus-within { border-color: var(--primary); background: #fff; }
+    .hsearch svg { flex-shrink: 0; }
+    .hsearch-input {
+      flex: 1; min-width: 0;
+      border: none; background: none; outline: none;
+      font-family: inherit; font-size: 13px; color: var(--text);
+    }
+    .hsearch-input::placeholder { color: var(--grey-md); }
+    .hsearch-clear {
+      flex-shrink: 0; border: none; background: none; cursor: pointer;
+      color: var(--grey-md); font-size: 18px; line-height: 1; padding: 0 2px;
+    }
+    .hsearch-clear[hidden] { display: none; }
+    .hsearch-clear:hover { color: var(--text); }
+
     .search-overlay {
-      position: fixed; top: 52px; left: 0; right: 0;
-      background: #fff; border-bottom: 1px solid var(--border);
-      box-shadow: 0 8px 28px rgba(0,0,0,0.13);
-      z-index: 150; padding: 10px 16px 14px;
+      position: fixed; top: 50px;
+      left: 50%; transform: translateX(-50%);
+      width: min(580px, 94vw);
+      background: #fff; border: 1px solid var(--border);
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 14px 34px rgba(0,0,0,0.16);
+      z-index: 150; padding: 10px 14px 14px;
       animation: searchIn .15s ease;
     }
     .search-overlay[hidden] { display: none !important; }
     @keyframes searchIn {
-      from { opacity: 0; transform: translateY(-6px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
-    .search-inner { max-width: 700px; margin: 0 auto; }
+    .search-inner { margin: 0 auto; }
     .search-input-row {
       display: flex; align-items: center; gap: 8px;
       border: 1.5px solid var(--border); border-radius: 10px;
@@ -769,10 +877,6 @@
       background: rgba(237,105,44,.18); color: var(--text);
       border-radius: 2px; padding: 0 1px; font-style: normal;
     }
-
-    @media (max-width: 640px) {
-      .group-nav-wrap, #subDivider { display: none; }
-    }
   </style>
 </head>
 <body>
@@ -816,38 +920,16 @@
     <img src="logo.png" class="logo-img" alt="EURAST">
     <div class="logo-label" id="header-label">Catálogo Tarifa RCR Completa</div>
   </a>
+  <!-- always-visible search bar (center of header) -->
+  <div class="hsearch" id="hsearch">
+    <svg width="15" height="15" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="5.5" cy="5.5" r="4"/><path d="M9 9l3.5 3.5"/>
+    </svg>
+    <input id="searchTextInput" class="hsearch-input" type="text" placeholder="Buscar referencia o nombre…" autocomplete="off">
+    <button class="hsearch-clear" id="btnSearchClear" aria-label="Borrar" hidden>×</button>
+  </div>
   <div class="toolbar">
     <button class="btn-menu" id="btnMenu" aria-label="Menu">☰</button>
-    <div class="ctrl-group">
-      <button id="btnPrev" disabled>‹</button>
-      <input id="pageInput" type="number" value="1" min="1">
-      <span id="totalWrap">/ <span id="totalLbl">—</span></span>
-      <button id="btnNext">›</button>
-    </div>
-    <div class="divider" id="subDivider"></div>
-    <div class="group-nav-wrap">
-      <button class="group-pill" id="groupPill">
-        <span id="pillGroupId">G01</span><span class="pill-sep">·</span><span id="pillGroupName"></span><span class="pill-sep">·</span><span id="pillSubPage">1</span><span class="pill-sep">/</span><span id="pillSubTotal">—</span><span class="pill-chevron">▾</span>
-      </button>
-      <div id="groupDropdown" hidden>
-        <div id="dropStep1">
-          <div class="drop-hdr" id="dropHdrText"></div>
-          <div id="dropGroupList"></div>
-        </div>
-        <div id="dropStep2" hidden>
-          <div class="drop-step2-inner">
-            <button class="drop-back-btn" id="dropBack">‹ <span id="dropBackName"></span></button>
-            <div class="drop-page-row">
-              <input id="dropPageNum" class="drop-page-num" type="number" min="1" value="1">
-              <span class="drop-page-of">/</span>
-              <span id="dropPageTotalLbl" class="drop-page-total">—</span>
-            </div>
-            <button class="drop-go-btn" id="dropGoBtn">→</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="divider" id="zoomDivider"></div>
     <div class="ctrl-group" id="zoomGroup">
       <button id="btnZoomOut">−</button>
       <span id="zoomLbl">100%</span>
@@ -862,62 +944,101 @@
       <option value="it">IT</option>
       <option value="pt">PT</option>
     </select>
-    <!-- flip mode toggle: shown on desktop when library loaded -->
+    <!-- PAGES: 1 ⟷ 2 pages (works in both scroll and flip modes) -->
+    <button class="btn-page-view" id="btnPages" title="Ver 2 páginas">
+      <!-- two pages icon: shown in 1-page mode (click → 2 pages) -->
+      <svg id="iconPages2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="7" height="16" rx="1"/><rect x="14" y="4" width="7" height="16" rx="1"/>
+      </svg>
+      <!-- one page icon: shown in 2-page mode (click → 1 page) -->
+      <svg id="iconPages1" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
+        <rect x="7" y="4" width="10" height="16" rx="1"/>
+      </svg>
+    </button>
+    <!-- VIEW MODE: vertical scroll ⟷ animated flip book (desktop only) -->
     <button class="btn-page-view" id="btnFlipMode" title="Vista de libro animado" hidden>
-      <!-- closed-book icon: visible in scroll mode (to enter flip) -->
+      <!-- open-book icon: shown in scroll mode (click → flip book) -->
       <svg id="iconBook" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        <path d="M12 7v14"/>
+        <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>
       </svg>
-      <!-- list icon: visible in flip mode (to exit) -->
-      <svg id="iconList" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
-        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-        <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-      </svg>
-    </button>
-    <!-- 1/2-page toggle: only shown when in flip mode -->
-    <button class="btn-page-view" id="btnPageView" title="Cambiar a 2 páginas" hidden>
-      <!-- 2-page spread icon: visible when in 1-page mode (will switch to 2) — hidden initially -->
-      <svg id="iconSpread" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
-        <path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/>
-        <path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h6z"/>
-      </svg>
-      <!-- 1-page icon: visible when in 1-page mode — shown initially -->
-      <svg id="iconSingle" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-        <polyline points="14 2 14 8 20 8"/>
+      <!-- stacked pages icon: shown in flip mode (click → vertical scroll) -->
+      <svg id="iconScroll" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
+        <rect x="4" y="3" width="16" height="7" rx="1.5"/><rect x="4" y="14" width="16" height="7" rx="1.5"/>
       </svg>
     </button>
-    <button class="btn-search" id="btnSearch" aria-label="Buscar">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="5.5" cy="5.5" r="4"/><path d="M9 9l3.5 3.5"/>
+    <button class="btn-search btn-fav" id="btnFav" aria-label="Favoritos" title="Referencias guardadas">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
       </svg>
+      <span id="favCount" class="fav-count" hidden>0</span>
     </button>
-    <a class="btn-contact" id="btn-contact" href="https://eurast.com/es/contacto" target="_blank" rel="noopener"><span id="contact-label">Contacto</span></a>
     <a class="btn-dl" id="btn-dl" href="cataleg.pdf" download>↓ <span id="dl-label">Descargar PDF</span></a>
   </div>
 </header>
 
-<!-- ── SEARCH OVERLAY ────────────────────────────────────────── -->
+<!-- ── SEARCH RESULTS (drops under the header search bar) ──────── -->
 <div id="searchOverlay" class="search-overlay" hidden>
   <div class="search-inner">
-    <div class="search-input-row">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="5.5" cy="5.5" r="4"/><path d="M9 9l3.5 3.5"/>
-      </svg>
-      <input id="searchTextInput" class="search-text-input" type="text"
-             placeholder="Buscar referencia, modelo o descripción..." autocomplete="off">
-      <button class="search-close-btn" id="btnSearchClose" aria-label="Cerrar">×</button>
-    </div>
     <div id="searchStatus" class="search-status"></div>
     <div id="searchResults" class="search-results"></div>
+  </div>
+</div>
+
+<!-- ── FAVORITES OVERLAY ─────────────────────────────────────── -->
+<div id="favOverlay" class="search-overlay" hidden>
+  <div class="search-inner">
+    <div class="fav-hdr">
+      <span class="fav-hdr-title" id="favTitle">Referencias guardadas</span>
+      <button class="search-close-btn" id="btnFavClose" aria-label="Cerrar">×</button>
+    </div>
+    <div id="favResults" class="search-results"></div>
+    <div id="favEmpty" class="search-status"></div>
   </div>
 </div>
 
 <div class="layout">
   <div id="sidebarBackdrop"></div>
   <div class="sidebar" id="sidebar">
-    <div class="nav-label" id="nav-label">Grupos</div>
+    <!-- navigation block (moved from the top bar) -->
+    <div class="side-nav">
+      <div class="ctrl-group side-pagenav">
+        <button id="btnPrev" disabled>‹</button>
+        <input id="pageInput" type="number" value="1" min="1">
+        <span id="totalWrap">/ <span id="totalLbl">—</span></span>
+        <button id="btnNext">›</button>
+      </div>
+      <div class="group-nav-wrap">
+        <button class="group-pill" id="groupPill">
+          <span id="pillGroupId">G01</span><span class="pill-sep">·</span><span id="pillGroupName"></span><span class="pill-sep">·</span><span id="pillSubPage">1</span><span class="pill-sep">/</span><span id="pillSubTotal">—</span><span class="pill-chevron">▾</span>
+        </button>
+        <div id="groupDropdown" hidden>
+          <div id="dropStep1">
+            <div class="drop-hdr" id="dropHdrText"></div>
+            <div id="dropGroupList"></div>
+          </div>
+          <div id="dropStep2" hidden>
+            <div class="drop-step2-inner">
+              <button class="drop-back-btn" id="dropBack">‹ <span id="dropBackName"></span></button>
+              <div class="drop-page-row">
+                <input id="dropPageNum" class="drop-page-num" type="number" min="1" value="1">
+                <span class="drop-page-of">/</span>
+                <span id="dropPageTotalLbl" class="drop-page-total">—</span>
+              </div>
+              <button class="drop-go-btn" id="dropGoBtn">→</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- groups index (scrolls) -->
+    <div class="side-groups" id="sidebarGroups">
+      <div class="nav-label" id="nav-label">Grupos</div>
+    </div>
+    <!-- footer -->
+    <div class="side-footer">
+      <a class="btn-contact" id="btn-contact" href="https://eurast.com/es/contacto" target="_blank" rel="noopener"><span id="contact-label">Contacto</span></a>
+    </div>
   </div>
   <div class="viewer" id="viewer"></div>
   <div class="flip-wrap" id="flipWrap" hidden>
@@ -941,12 +1062,15 @@ let UNLOAD_FAR = IS_MOBILE ? 4 : 8;
 
 const viewer  = document.getElementById('viewer');
 const sidebar = document.getElementById('sidebar');
+const sidebarGroups = document.getElementById('sidebarGroups');
 
 let pdf, totalPages, zoom = 1.0, currentPage = 1;
 let flipBook_instance = null;
 let flipGoTo = null;     // assigned in flip-book init; navigates flip mode reliably
 let flipApplyZoom = null; // assigned in flip-book init; applies zoom in flip mode
-let flipModeActive = false;
+let flipModeActive = false;     // false = vertical scroll, true = flip book
+let twoPage = false;            // false = 1 page, true = 2 pages (both modes)
+let flipSetPages = null;        // assigned in flip init; applies twoPage to flip
 const slots    = [];
 const rendered = new Set();
 
@@ -956,6 +1080,18 @@ let currentGroupStart = 1, currentGroupEnd = 1;
 // Search index state
 const searchIndex = [];
 let   indexedCount = 0, isIndexing = false, searchTimer = null;
+
+// ── REFERENCE INDEX (prebuilt) ─────────────────────────────────────
+// References are extracted offline from the PDF (scripts/build-refs.py) into
+// references.json — one entry per price-table page: { p:page, g:groupIdx,
+// f:family, c:[codes] }. Done offline because pdf.js splits code tokens
+// inconsistently in the browser, while the offline extractor reads them whole.
+// Fetched early (not gated behind page rendering) so search works ASAP.
+let refPages = [];
+fetch('references.json')
+  .then(r => r.ok ? r.json() : null)
+  .then(d => { if (d && Array.isArray(d.pages)) refPages = d.pages; })
+  .catch(() => {});
 
 // ── UI STRINGS (multilingual) ──────────────────────────────────────
 const STRINGS = {
@@ -1171,6 +1307,11 @@ function calcPageWidth() {
   const vW = viewer.clientWidth  || (window.innerWidth  - 210);
   const vH = viewer.clientHeight || (window.innerHeight - 52);
   if (vW < 10) return 800;
+  if (twoPage && !flipModeActive) {
+    // two pages + the .viewer.two-up padding (18*2) and column-gap (30)
+    const w = Math.floor((vW - 36 - 30) / 2);
+    return Math.max(w, 120) * zoom;
+  }
   const fitByH = Math.max(vH - 24, 100) / sampleRatio;
   const maxW   = vW - 8;
   return Math.min(fitByH, maxW) * zoom;
@@ -1243,6 +1384,10 @@ async function renderSlot(num) {
       try {
         const textDiv = document.createElement('div');
         textDiv.className = 'textLayer';
+        // pdf.js v4 TextLayer sizes spans via this CSS variable; without it the
+        // spans are mis-scaled and text selection is broken / shows huge blocks.
+        textDiv.style.setProperty('--scale-factor', vp.scale);
+        textDiv.style.setProperty('--total-scale-factor', vp.scale);
         slot.appendChild(textDiv);
         const tl = new pdfjsLib.TextLayer({
           textContentSource: page.streamTextContent(),
@@ -1250,6 +1395,7 @@ async function renderSlot(num) {
           viewport: vp,
         });
         await tl.render();
+        cleanTextLayerSelection(textDiv);
       } catch(_) {}
     } catch(e) {
       // render cancelled or page fetch failed — ignore
@@ -1333,8 +1479,6 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
     flipPages.push(canvas);
   }
 
-  let flipPortrait = true;
-
   // The library overrides the block element's width with 100%, so mode is
   // controlled via a sizing wrapper: narrow → portrait, wide → landscape.
   // StPageFlip recalculates orientation on window resize — no rebuild needed.
@@ -1350,7 +1494,8 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
   flipSizeEl.appendChild(flipBookEl);
 
   function syncFlipZoom() {
-    const baseW = flipPortrait ? flipW : flipW * 2;
+    const baseW = twoPage ? flipW * 2 : flipW;
+    flipSizeEl.classList.toggle('spread', twoPage); // central separation
     flipSizeEl.style.width      = baseW + 'px';
     flipSizeEl.style.height     = flipH + 'px';
     flipSizeEl.style.transform  = `scale(${zoom})`;
@@ -1359,6 +1504,9 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
   }
   syncFlipZoom();
   flipApplyZoom = syncFlipZoom;
+  // Apply the shared 1/2-page state to the flip book (resize → StPageFlip
+  // recalculates portrait/landscape from the container width).
+  flipSetPages = () => { syncFlipZoom(); window.dispatchEvent(new Event('resize')); };
 
   flipDivs.forEach(d => flipBookEl.appendChild(d));
 
@@ -1432,19 +1580,6 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
   document.getElementById('flipPrev').addEventListener('click', () => flipBook_instance.flipPrev());
   document.getElementById('flipNext').addEventListener('click', () => flipBook_instance.flipNext());
 
-  // Single / double page toggle — resize the wrapper and let the library
-  // recalculate its orientation (portrait = single, landscape = double)
-  document.getElementById('btnPageView').addEventListener('click', () => {
-    flipPortrait = !flipPortrait;
-    syncFlipZoom();
-    window.dispatchEvent(new Event('resize'));
-    const btn = document.getElementById('btnPageView');
-    // SVG elements lack the .hidden IDL property — toggle the attribute
-    document.getElementById('iconSpread').toggleAttribute('hidden',  flipPortrait);
-    document.getElementById('iconSingle').toggleAttribute('hidden', !flipPortrait);
-    btn.title = flipPortrait ? STRINGS[currentLang].flip.to2 : STRINGS[currentLang].flip.to1;
-  });
-
   // ── FLIP MODE ACTIVATE / DEACTIVATE ─────────────────────────────
   function activateFlipMode() {
     flipModeActive = true;
@@ -1453,11 +1588,10 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
     const target = currentPage;
     document.getElementById('viewer').hidden = true;
     document.getElementById('flipWrap').hidden = false;
-    document.getElementById('btnPageView').hidden = false;
     document.getElementById('iconBook').toggleAttribute('hidden', true);
-    document.getElementById('iconList').toggleAttribute('hidden', false);
+    document.getElementById('iconScroll').toggleAttribute('hidden', false);
     document.getElementById('btnFlipMode').title = STRINGS[currentLang].flip.exit;
-    syncFlipZoom();
+    syncFlipZoom(); // reflects the current twoPage state
     // Container is now visible & sized → safe to build the flip book
     ensureFlipInit();
     // Let StPageFlip measure the now-visible container before navigating
@@ -1470,14 +1604,13 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
     flipModeActive = false;
     document.getElementById('viewer').hidden = false;
     document.getElementById('flipWrap').hidden = true;
-    document.getElementById('btnPageView').hidden = true;
     document.getElementById('iconBook').toggleAttribute('hidden', false);
-    document.getElementById('iconList').toggleAttribute('hidden', true);
+    document.getElementById('iconScroll').toggleAttribute('hidden', true);
     document.getElementById('btnFlipMode').title = STRINGS[currentLang].flip.enter;
+    viewer.classList.toggle('two-up', twoPage); // carry the 1/2-page state over
     slots.forEach(s => pageObs.observe(s));
     observerReady = false;
-    goTo(currentPage);
-    setTimeout(() => { observerReady = true; }, 400);
+    relayoutScroll();
   }
 
   document.getElementById('btnFlipMode').addEventListener('click', () => {
@@ -1499,7 +1632,7 @@ GROUPS.forEach((g, idx) => {
     // same click) runs first and doesn't immediately close it again.
     setTimeout(() => openGroupDropdownAtGroup(idx), 0);
   });
-  sidebar.appendChild(btn);
+  sidebarGroups.appendChild(btn);
 });
 
 // ── LANGUAGE SWITCHER ──────────────────────────────────────────────
@@ -1519,17 +1652,12 @@ function setLang(lang) {
   });
   // Search controls
   const sx = STRINGS[lang].search;
-  document.getElementById('btnSearch').setAttribute('aria-label', sx.ariaSearch);
-  document.getElementById('btnSearchClose').setAttribute('aria-label', sx.ariaClose);
   document.getElementById('modalClose').setAttribute('aria-label', sx.ariaClose);
   document.getElementById('searchTextInput').placeholder = sx.placeholder;
-  // Flip-book toggle tooltips (reflect current mode)
+  // View-toggle tooltips (reflect current state)
   const fx = STRINGS[lang].flip;
   document.getElementById('btnFlipMode').title = flipModeActive ? fx.exit : fx.enter;
-  const pvBtn = document.getElementById('btnPageView');
-  // iconSingle visible (not hidden) means we're in 1-page mode → next switches to 2
-  const inSinglePage = !document.getElementById('iconSingle').hasAttribute('hidden');
-  pvBtn.title = inSinglePage ? fx.to2 : fx.to1;
+  document.getElementById('btnPages').title = twoPage ? fx.to1 : fx.to2;
   // Refresh search status / results if the overlay is open
   if (!document.getElementById('searchOverlay').hidden) {
     const q = document.getElementById('searchTextInput').value;
@@ -1774,6 +1902,45 @@ document.getElementById('btnZoomOut').addEventListener('click', () => {
   applyZoom();
 });
 
+// ── 1 / 2 COLUMNS (normal scroll view) ─────────────────────────────
+// Re-flow the scroll viewer at the current page width and re-render around
+// the current page. Used by the columns toggle.
+function relayoutScroll() {
+  renderQueue.forEach(e => e.task?.cancel());
+  renderQueue.clear();
+  rendered.clear();
+  const w = calcPageWidth();
+  slots.forEach(s => {
+    s.innerHTML    = LOADER_HTML;
+    s.style.width  = w + 'px';
+    s.style.height = Math.round(w * sampleRatio) + 'px';
+  });
+  observerReady = false;
+  for (let i = Math.max(1, currentPage - PRERENDER); i <= Math.min(totalPages, currentPage + PRERENDER); i++) {
+    renderSlot(i);
+  }
+  slots[currentPage - 1]?.scrollIntoView({ behavior: 'instant', block: 'start' });
+  setTimeout(() => { observerReady = true; }, 350);
+}
+
+// PAGES toggle (1 ⟷ 2) — applies to whichever view mode is active
+function updatePagesIcon() {
+  document.getElementById('iconPages2').toggleAttribute('hidden',  twoPage);
+  document.getElementById('iconPages1').toggleAttribute('hidden', !twoPage);
+  const fx = STRINGS[currentLang].flip;
+  document.getElementById('btnPages').title = twoPage ? fx.to1 : fx.to2;
+}
+document.getElementById('btnPages').addEventListener('click', () => {
+  twoPage = !twoPage;
+  updatePagesIcon();
+  if (flipModeActive) {
+    if (flipSetPages) flipSetPages();
+  } else {
+    viewer.classList.toggle('two-up', twoPage);
+    relayoutScroll();
+  }
+});
+
 // ── RESIZE ────────────────────────────────────────────────────────
 let resizeTimer;
 window.addEventListener('resize', () => {
@@ -1796,17 +1963,104 @@ window.addEventListener('resize', () => {
 // ── KEYBOARD ──────────────────────────────────────────────────────
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    if (!document.getElementById('favOverlay').hidden) { closeFavs(); return; }
     if (!document.getElementById('searchOverlay').hidden) { closeSearch(); return; }
     closeModal(); return;
   }
   if (!document.getElementById('leadModal').hidden) return;
   if (!document.getElementById('searchOverlay').hidden) return;
+  if (!document.getElementById('favOverlay').hidden) return;
+  // don't navigate pages while typing in the search bar
+  const ae = document.activeElement;
+  if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return;
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
     if (flipModeActive && flipBook_instance) flipBook_instance.flipNext(); else goTo(currentPage + 1);
   }
   if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
     if (flipModeActive && flipBook_instance) flipBook_instance.flipPrev(); else goTo(currentPage - 1);
   }
+});
+
+// ── CLEAN TEXT-LAYER SELECTION ─────────────────────────────────────
+// PDF.js pads table cells with trailing spaces in the text layer; with
+// `white-space: pre` those spaces have width and get highlighted as big
+// empty blue blocks when dragging. Trim the trailing whitespace of each
+// span (no effect on its left position) and drop now-empty filler spans
+// from selection, so dragging only highlights the actual values.
+// Trade-off: copying several cells at once loses the separating spaces.
+function cleanTextLayerSelection(container) {
+  for (const span of container.querySelectorAll('span')) {
+    const tn = span.firstChild;
+    if (!tn || tn.nodeType !== 3) continue;
+    const trimmed = tn.data.replace(/\s+$/, '');
+    if (trimmed !== tn.data) tn.data = trimmed;
+    if (trimmed === '') span.style.userSelect = 'none';
+  }
+}
+
+// ── SMARTER DOUBLE-CLICK SELECTION ─────────────────────────────────
+// PDF.js sometimes splits a single reference (e.g. "31960000") across two
+// adjacent text spans, so a plain double-click only grabs half of it. On
+// double-click inside a text layer we extend the selection across spans
+// that touch on the same line, so the whole alphanumeric token is selected.
+const WORD_CHAR = /[\p{L}\p{N}]/u;
+
+function spanTextNode(el) {
+  return el && el.firstChild && el.firstChild.nodeType === 3 ? el.firstChild : null;
+}
+// True if span `a` immediately precedes span `b` on the same visual line.
+function spansTouch(a, b) {
+  const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+  if (!ra.width || !rb.width) return false;
+  const tol = Math.max(ra.height, rb.height) * 0.6;
+  return Math.abs(ra.top - rb.top) < tol && Math.abs(rb.left - ra.right) < tol;
+}
+
+function extendSelectionToToken() {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+  const range = sel.getRangeAt(0);
+  let sNode = range.startContainer, sOff = range.startOffset;
+  let eNode = range.endContainer,   eOff = range.endOffset;
+  if (sNode.nodeType !== 3 || eNode.nodeType !== 3) return;
+  if (!sNode.parentElement || !sNode.parentElement.closest('.textLayer')) return;
+
+  // Expand backward over word chars, crossing into touching previous spans
+  while (true) {
+    while (sOff > 0 && WORD_CHAR.test(sNode.data[sOff - 1])) sOff--;
+    if (sOff > 0) break;
+    const prevSpan = sNode.parentElement.previousElementSibling;
+    const prevText = spanTextNode(prevSpan);
+    if (prevText && prevText.data.length &&
+        WORD_CHAR.test(prevText.data[prevText.data.length - 1]) &&
+        spansTouch(prevSpan, sNode.parentElement)) {
+      sNode = prevText; sOff = prevText.data.length;
+    } else break;
+  }
+  // Expand forward over word chars, crossing into touching next spans
+  while (true) {
+    while (eOff < eNode.data.length && WORD_CHAR.test(eNode.data[eOff])) eOff++;
+    if (eOff < eNode.data.length) break;
+    const nextSpan = eNode.parentElement.nextElementSibling;
+    const nextText = spanTextNode(nextSpan);
+    if (nextText && nextText.data.length &&
+        WORD_CHAR.test(nextText.data[0]) &&
+        spansTouch(eNode.parentElement, nextSpan)) {
+      eNode = nextText; eOff = 0;
+    } else break;
+  }
+
+  try {
+    const r = document.createRange();
+    r.setStart(sNode, sOff);
+    r.setEnd(eNode, eOff);
+    sel.removeAllRanges();
+    sel.addRange(r);
+  } catch(_) {}
+}
+
+document.addEventListener('dblclick', e => {
+  if (e.target.closest && e.target.closest('.textLayer')) extendSelectionToToken();
 });
 
 // ── SUB-PAGE NAVIGATION ────────────────────────────────────────────
@@ -1927,26 +2181,6 @@ function getGroupIdxForPage(pageNum) {
   return idx;
 }
 
-const SEARCH_CACHE_KEY = 'eurast_idx_v2';
-
-function tryRestoreSearchIndex() {
-  try {
-    const stored = localStorage.getItem(SEARCH_CACHE_KEY);
-    if (!stored) return false;
-    const data = JSON.parse(stored);
-    if (!data || data.total !== totalPages || !Array.isArray(data.entries) || !data.entries.length) return false;
-    searchIndex.push(...data.entries);
-    indexedCount = data.entries.length;
-    return true;
-  } catch(_) { return false; }
-}
-
-function saveSearchIndexCache() {
-  try {
-    localStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify({ total: totalPages, entries: searchIndex }));
-  } catch(_) {}
-}
-
 // Map position in norm string (no spaces) back to position in original text
 function mapNormToText(text, normPos) {
   let count = 0;
@@ -1957,30 +2191,29 @@ function mapNormToText(text, normPos) {
   return text.length;
 }
 
+// Full-text index for the fallback search comes from a prebuilt static file
+// (search-text.json, built offline by scripts/build-refs.py). It's fetched
+// once and HTTP-cached by the browser — no PDF text extraction on the client,
+// so nothing is re-indexed on each load. Loaded lazily when search is opened.
 async function buildSearchIndex() {
-  if (isIndexing || indexedCount >= totalPages) return;
+  if (isIndexing || indexedCount > 0) return;
   isIndexing = true;
-  for (let i = 1; i <= totalPages; i += 6) {
-    const tasks = [];
-    for (let j = i; j < Math.min(i + 6, totalPages + 1); j++) {
-      tasks.push((async n => {
-        try {
-          const page = await pdf.getPage(n);
-          const tc   = await page.getTextContent();
-          const text = tc.items.map(it => it.str).join(' ');
-          const norm = text.replace(/\s+/g, '');
-          searchIndex.push({ page: n, gIdx: getGroupIdxForPage(n), text, norm });
-          indexedCount++;
-        } catch(_) {}
-      })(j));
-    }
-    await Promise.all(tasks);
-    if (!document.getElementById('searchOverlay').hidden) renderSearchStatus('');
-    await new Promise(r => setTimeout(r, 15));
-  }
-  isIndexing = false;
-  saveSearchIndexCache();
   if (!document.getElementById('searchOverlay').hidden) renderSearchStatus('');
+  try {
+    const r = await fetch('search-text.json');
+    const d = await r.json();
+    for (const e of (d.pages || [])) {
+      searchIndex.push({ page: e.p, gIdx: e.g, text: e.t, norm: e.t.replace(/\s+/g, '') });
+    }
+    indexedCount = searchIndex.length;
+  } catch(_) {}
+  isIndexing = false;
+  // Re-run the current query now that the text index is ready
+  const overlay = document.getElementById('searchOverlay');
+  if (overlay && !overlay.hidden) {
+    const q = document.getElementById('searchTextInput').value;
+    if (q && q.trim().length >= 2) doSearch(q); else renderSearchStatus('');
+  }
 }
 
 function renderSearchStatus(query) {
@@ -1998,6 +2231,110 @@ function renderSearchStatus(query) {
   }
 }
 
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Accent-insensitive, 1:1 (length-preserving so snippet offsets stay valid).
+const ACCENT_MAP = { 'á':'a','à':'a','â':'a','ä':'a','ã':'a','é':'e','è':'e','ê':'e','ë':'e','í':'i','ì':'i','î':'i','ï':'i','ó':'o','ò':'o','ô':'o','ö':'o','õ':'o','ú':'u','ù':'u','û':'u','ü':'u','ñ':'n','ç':'c' };
+function deburr(s) {
+  return s.toLowerCase().replace(/[áàâäãéèêëíìîïóòôöõúùûüñç]/g, c => ACCENT_MAP[c]);
+}
+
+function setSearchStatus(count) {
+  const statusEl = document.getElementById('searchStatus');
+  const s = STRINGS[currentLang].search;
+  const word = count === 1 ? s.resultOne : s.resultMany;
+  if (isIndexing) {
+    const pct = Math.round(indexedCount / totalPages * 100);
+    statusEl.innerHTML = `<div class="search-index-wrap">
+      <span><strong>${count}</strong> ${word} (${s.indexingShort} ${pct}%…)</span>
+      <div class="search-index-bar"><div class="search-index-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  } else {
+    statusEl.textContent = count === 0 ? s.noResults : `${count} ${word}`;
+  }
+}
+
+// ── FAVORITES (localStorage, no login) ─────────────────────────────
+const FAV_KEY = 'eurast_favs';
+const FAV_STRINGS = {
+  es: { title: 'Referencias guardadas', empty: 'Aún no tienes referencias guardadas. Busca una referencia y toca la estrella ☆ para guardarla.' },
+  en: { title: 'Saved references',       empty: 'No saved references yet. Search a reference and tap the star ☆ to save it.' },
+  fr: { title: 'Références enregistrées', empty: 'Aucune référence enregistrée. Cherchez une référence et touchez l’étoile ☆ pour l’enregistrer.' },
+  de: { title: 'Gespeicherte Referenzen', empty: 'Noch keine gespeicherten Referenzen. Suchen Sie eine Referenz und tippen Sie auf den Stern ☆.' },
+  it: { title: 'Riferimenti salvati',     empty: 'Nessun riferimento salvato. Cerca un riferimento e tocca la stella ☆ per salvarlo.' },
+  pt: { title: 'Referências guardadas',   empty: 'Ainda não tens referências guardadas. Procura uma referência e toca na estrela ☆ para guardar.' },
+};
+const STAR_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+let favs = loadFavs();
+
+function loadFavs() {
+  try { const a = JSON.parse(localStorage.getItem(FAV_KEY)); return Array.isArray(a) ? a : []; }
+  catch(_) { return []; }
+}
+function saveFavs() { try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch(_) {} }
+function isFav(ref) { return favs.some(f => f.ref === ref); }
+function toggleFav(r) {
+  if (isFav(r.ref)) favs = favs.filter(f => f.ref !== r.ref);
+  else favs.unshift({ ref: r.ref, family: r.family || '', page: r.page, gIdx: r.gIdx });
+  saveFavs();
+  updateFavBtn();
+}
+function updateFavBtn() {
+  const btn = document.getElementById('btnFav');
+  const cnt = document.getElementById('favCount');
+  if (!btn) return;
+  btn.classList.toggle('has-favs', favs.length > 0);
+  cnt.textContent = favs.length;
+  cnt.hidden = favs.length === 0;
+}
+
+// Build a reference result row (badge · code · family · star). Shared by the
+// search results and the favorites panel.
+function makeRefRow(r, onStarToggle) {
+  const g = GROUPS[r.gIdx];
+  const s = STRINGS[currentLang].search;
+  const btn = document.createElement('button');
+  btn.className = 'search-result';
+  const famHtml = r.family ? `${escapeHtml(r.family)} · ${s.pageAbbr} ${r.page}` : `${s.pageAbbr} ${r.page}`;
+  btn.innerHTML = `<span class="search-result-badge">${g.id}</span>
+    <span class="search-result-page">${escapeHtml(r.ref)}</span>
+    <span class="search-result-snippet">${famHtml}</span>
+    <span class="fav-star${isFav(r.ref) ? ' on' : ''}" role="button" aria-label="Favorito">${STAR_SVG}</span>`;
+  btn.addEventListener('click', () => { goTo(r.page); closeSearch(); closeFavs(); highlightRef(r.page, r.ref); });
+  const star = btn.querySelector('.fav-star');
+  star.addEventListener('click', e => {
+    e.stopPropagation();
+    toggleFav(r);
+    star.classList.toggle('on', isFav(r.ref));
+    if (onStarToggle) onStarToggle();
+  });
+  return btn;
+}
+
+function openFavs() {
+  closeSearch();
+  const list  = document.getElementById('favResults');
+  const empty = document.getElementById('favEmpty');
+  const fx = FAV_STRINGS[currentLang] || FAV_STRINGS.es;
+  document.getElementById('favTitle').textContent = fx.title;
+  list.innerHTML = '';
+  if (!favs.length) {
+    empty.textContent = fx.empty;
+    empty.hidden = false;
+  } else {
+    empty.hidden = true;
+    favs.forEach(r => list.appendChild(makeRefRow(r, () => { if (!isFav(r.ref)) openFavs(); })));
+  }
+  document.getElementById('favOverlay').hidden = false;
+  document.getElementById('btnFav').classList.add('active');
+}
+function closeFavs() {
+  document.getElementById('favOverlay').hidden = true;
+  document.getElementById('btnFav').classList.remove('active');
+}
+
 function doSearch(query) {
   const statusEl  = document.getElementById('searchStatus');
   const resultsEl = document.getElementById('searchResults');
@@ -2006,27 +2343,62 @@ function doSearch(query) {
   const qNorm  = q.replace(/\s+/g, '');
   if (!qNorm || qNorm.length < 2) { resultsEl.innerHTML = ''; renderSearchStatus(query); return; }
 
-  const hits     = [];
-  const fullHitPages = new Set();
-
-  for (const e of searchIndex) {
-    const lower = e.text.toLowerCase();
-
-    // Full-text match (query as typed, with any spaces)
-    if (q.length >= 2) {
-      let pos = lower.indexOf(q), cnt = 0;
-      while (pos !== -1 && cnt < 2) {
-        fullHitPages.add(e.page);
-        const s = Math.max(0, pos - 30), end = Math.min(e.text.length, pos + q.length + 45);
-        hits.push({ page: e.page, gIdx: e.gIdx, raw: e.text.substring(s, end), mo: pos - s, mLen: q.length });
-        pos = lower.indexOf(q, pos + 1); cnt++;
+  // ── Reference-centric results: match by code OR by family name ──
+  const qd  = deburr(q);
+  const qUp = deburr(qNorm).toUpperCase();
+  const byRef = new Map(); // ref → { ref, family, page, gIdx, score }
+  for (const e of refPages) {
+    if (!e.c || !e.c.length) continue;
+    const famMatch = qd.length >= 2 && deburr(e.f || '').includes(qd);
+    for (const code of e.c) {
+      let score = null;
+      const ci = code.indexOf(qUp);
+      if (qUp.length >= 2 && ci !== -1) {
+        score = code === qUp ? 0 : (ci === 0 ? 1 : 2);
+      } else if (famMatch) {
+        score = 4;
+      }
+      if (score === null) continue;
+      const prev = byRef.get(code);
+      if (!prev || score < prev.score) {
+        byRef.set(code, { ref: code, family: e.f || '', page: e.p, gIdx: e.g, score });
       }
     }
+  }
 
-    // Compact match: ignore spaces in both text and query — catches "3416 2313" when typing "34162313"
-    if (!fullHitPages.has(e.page) && e.norm && qNorm.length >= 2) {
-      const normLower = e.norm.toLowerCase();
-      const npos = normLower.indexOf(qNorm);
+  const refs = [...byRef.values()].sort((a, b) => a.score - b.score || a.page - b.page);
+
+  if (refs.length) {
+    setSearchStatus(refs.length);
+    resultsEl.innerHTML = '';
+    refs.slice(0, 60).forEach(r => resultsEl.appendChild(makeRefRow(r)));
+    return;
+  }
+
+  // ── Fallback: full-text snippet search (specs, words not in a heading) ──
+  fullTextSearch(q, qNorm);
+}
+
+// Full-text fallback: highlight the matched substring in a page-text snippet.
+function fullTextSearch(q, qNorm) {
+  const resultsEl = document.getElementById('searchResults');
+  const qd  = deburr(q);
+  const qNd = deburr(qNorm);
+  const hits = [];
+  const fullHitPages = new Set();
+  for (const e of searchIndex) {
+    const lower = deburr(e.text); // 1:1 with e.text, so offsets stay valid
+    if (qd.length >= 2) {
+      let pos = lower.indexOf(qd), cnt = 0;
+      while (pos !== -1 && cnt < 2) {
+        fullHitPages.add(e.page);
+        const s = Math.max(0, pos - 30), end = Math.min(e.text.length, pos + qd.length + 45);
+        hits.push({ page: e.page, gIdx: e.gIdx, raw: e.text.substring(s, end), mo: pos - s, mLen: qd.length });
+        pos = lower.indexOf(qd, pos + 1); cnt++;
+      }
+    }
+    if (!fullHitPages.has(e.page) && e.norm && qNd.length >= 2) {
+      const npos = deburr(e.norm).indexOf(qNd);
       if (npos !== -1) {
         const textPos = mapNormToText(e.text, npos);
         const textEnd = mapNormToText(e.text, npos + qNorm.length);
@@ -2036,25 +2408,15 @@ function doSearch(query) {
     }
   }
   hits.sort((a, b) => a.page - b.page);
+  setSearchStatus(hits.length);
 
   const s = STRINGS[currentLang].search;
-  const resultWord = hits.length === 1 ? s.resultOne : s.resultMany;
-  if (isIndexing) {
-    const pct = Math.round(indexedCount / totalPages * 100);
-    statusEl.innerHTML = `<div class="search-index-wrap">
-      <span><strong>${hits.length}</strong> ${resultWord} (${s.indexingShort} ${pct}%…)</span>
-      <div class="search-index-bar"><div class="search-index-fill" style="width:${pct}%"></div></div>
-    </div>`;
-  } else {
-    statusEl.textContent = hits.length === 0 ? s.noResults : `${hits.length} ${resultWord}`;
-  }
-
   resultsEl.innerHTML = '';
   hits.slice(0, 30).forEach(h => {
     const g   = GROUPS[h.gIdx];
     const btn = document.createElement('button');
     btn.className = 'search-result';
-    const safe = h.raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const safe = escapeHtml(h.raw);
     const snip = safe.slice(0, h.mo) + `<mark>${safe.slice(h.mo, h.mo + h.mLen)}</mark>` + safe.slice(h.mo + h.mLen);
     btn.innerHTML = `<span class="search-result-badge">${g.id}</span>
       <span class="search-result-page">${s.pageAbbr} ${h.page}</span>
@@ -2064,34 +2426,80 @@ function doSearch(query) {
   });
 }
 
-// ── SEARCH UI ─────────────────────────────────────────────────────
-function openSearch() {
-  document.getElementById('searchOverlay').hidden = false;
-  document.getElementById('btnSearch').classList.add('active');
-  document.getElementById('searchTextInput').focus();
-  renderSearchStatus('');
-  if (!isIndexing && indexedCount === 0) buildSearchIndex();
+// After navigating to a page, scroll to and briefly highlight the reference
+// in the text layer (scroll viewer only; the flip book is a canvas).
+function highlightRef(pageNum, code) {
+  if (flipModeActive) return;
+  let tries = 0;
+  const timer = setInterval(() => {
+    tries++;
+    const slot = slots[pageNum - 1];
+    const tl   = slot && slot.querySelector('.textLayer');
+    if (tl) {
+      const target = [...tl.querySelectorAll('span')]
+        .find(sp => (sp.textContent || '').replace(/\s/g, '').toUpperCase().includes(code));
+      if (target) {
+        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        const prevBg = target.style.background;
+        target.style.background = 'rgba(237,105,44,.45)';
+        target.style.borderRadius = '2px';
+        setTimeout(() => { target.style.background = prevBg; }, 2600);
+        clearInterval(timer);
+        return;
+      }
+    }
+    if (tries > 24) clearInterval(timer);
+  }, 150);
 }
-function closeSearch() {
-  document.getElementById('searchOverlay').hidden = true;
-  document.getElementById('btnSearch').classList.remove('active');
-  document.getElementById('searchTextInput').value = '';
-  document.getElementById('searchResults').innerHTML = '';
+
+// ── SEARCH UI (always-visible bar; results drop down below) ───────
+const searchInput = document.getElementById('searchTextInput');
+
+function showResults() { document.getElementById('searchOverlay').hidden = false; }
+// "close" here = hide the results dropdown (the bar itself stays visible)
+function closeSearch() { document.getElementById('searchOverlay').hidden = true; }
+// kept for callers that want to focus the search bar
+function openSearch() { closeFavs(); searchInput.focus(); }
+
+function runSearch() {
+  const q = searchInput.value;
+  document.getElementById('btnSearchClear').hidden = !q;
+  if (q.trim().length >= 2) { showResults(); doSearch(q); }
+  else { closeSearch(); }
 }
-document.getElementById('btnSearch').addEventListener('click', () =>
-  document.getElementById('searchOverlay').hidden ? openSearch() : closeSearch());
-document.getElementById('btnSearchClose').addEventListener('click', closeSearch);
-document.getElementById('searchTextInput').addEventListener('input', e => {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => doSearch(e.target.value), 220);
+
+searchInput.addEventListener('focus', () => {
+  closeFavs();
+  if (!isIndexing && indexedCount === 0) buildSearchIndex(); // lazy-load text index
+  if (searchInput.value.trim().length >= 2) { showResults(); doSearch(searchInput.value); }
 });
-document.getElementById('searchTextInput').addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeSearch();
-  if (e.key === 'Enter') { clearTimeout(searchTimer); doSearch(e.target.value); }
+searchInput.addEventListener('input', () => {
+  document.getElementById('btnSearchClear').hidden = !searchInput.value;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(runSearch, 200);
+});
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeSearch(); searchInput.blur(); }
+  if (e.key === 'Enter')  { clearTimeout(searchTimer); runSearch(); }
+});
+// Hide results when focus leaves the bar/results (delay so result clicks land)
+searchInput.addEventListener('blur', () => setTimeout(() => {
+  if (!document.getElementById('searchOverlay').contains(document.activeElement)) closeSearch();
+}, 180));
+document.getElementById('btnSearchClear').addEventListener('click', () => {
+  searchInput.value = '';
+  document.getElementById('btnSearchClear').hidden = true;
+  closeSearch();
+  searchInput.focus();
 });
 
-// Pre-index: restore from localStorage cache if available, otherwise build in background
-setTimeout(() => { if (!tryRestoreSearchIndex()) buildSearchIndex(); }, 4000);
+// Favorites button + panel
+updateFavBtn();
+document.getElementById('btnFav').addEventListener('click', () =>
+  document.getElementById('favOverlay').hidden ? openFavs() : closeFavs());
+document.getElementById('btnFavClose').addEventListener('click', closeFavs);
+// The full-text index (search-text.json) loads lazily on first focus of the
+// search bar — no eager download for users who never search.
 </script>
 </body>
 </html>
