@@ -8,7 +8,9 @@
   <link rel="apple-touch-icon" href="logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.js"></script>
+  <script src="https://unpkg.com/page-flip@2.0.7/dist/js/page-flip.browser.js"
+          integrity="sha384-L4eWrYFdqQ+LoGA0MMuqLqzV13x7SKkQaqacy4MED8e815dS37tTKlO/6xBEUpZW"
+          crossorigin="anonymous"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -1351,6 +1353,10 @@ buildSlots();
 // ── RENDER PAGE INTO SLOT ──────────────────────────────────────────
 const renderQueue = new Map(); // num → { promise, task }
 
+// Render pages above their CSS size so they stay sharp on retina/mobile screens
+// and when zoomed. The canvas keeps the CSS (layout) size but holds more pixels.
+const SCROLL_RENDER_QUALITY = Math.min(Math.max(window.devicePixelRatio || 1, 1.5), 2.5);
+
 async function renderSlot(num) {
   if (rendered.has(num)) return;
   if (renderQueue.has(num)) return renderQueue.get(num).promise;
@@ -1363,19 +1369,21 @@ async function renderSlot(num) {
       const slot = slots[num - 1];
       if (!slot) return;
 
-      const page  = await pdf.getPage(num);
-      const scale = calcPageWidth() / page.getViewport({ scale: 1 }).width;
-      const vp    = page.getViewport({ scale });
+      const page     = await pdf.getPage(num);
+      const baseW    = page.getViewport({ scale: 1 }).width;
+      const cssScale = calcPageWidth() / baseW;
+      const vp       = page.getViewport({ scale: cssScale });          // CSS/layout size
+      const renderVp = page.getViewport({ scale: cssScale * SCROLL_RENDER_QUALITY }); // hi-res pixels
 
       slot.style.width  = vp.width  + 'px';
       slot.style.height = vp.height + 'px';
 
       const canvas = document.createElement('canvas');
-      canvas.width  = vp.width;
-      canvas.height = vp.height;
-      slot.appendChild(canvas);
+      canvas.width  = Math.round(renderVp.width);
+      canvas.height = Math.round(renderVp.height);
+      slot.appendChild(canvas); // CSS width/height:100% downscales the hi-res canvas → sharp
 
-      entry.task = page.render({ canvasContext: canvas.getContext('2d'), viewport: vp });
+      entry.task = page.render({ canvasContext: canvas.getContext('2d'), viewport: renderVp });
       await entry.task.promise;
       rendered.add(num);
       slot.querySelector('.page-loader')?.remove();
@@ -1716,8 +1724,9 @@ async function submitLead(email, company) {
   btn.disabled    = true;
   btn.textContent = STRINGS[currentLang].modal.sending;
 
-  // Persist so returning visitors skip the modal
-  localStorage.setItem(LEAD_LS_KEY, email);
+  // Persist a non-PII flag so returning visitors skip the modal
+  // (no guardem l'email en clar a localStorage)
+  localStorage.setItem(LEAD_LS_KEY, '1');
 
   const sendPromise = fetch(LEAD_WEBHOOK, {
     method:  'POST',
@@ -1728,6 +1737,7 @@ async function submitLead(email, company) {
       country,
       language: currentLang,
       source:   'cataleg_download',
+      token:    'EUR_CAT_2026',
     }),
   }).catch(err => console.warn('Lead webhook error:', err));
 
@@ -1765,7 +1775,7 @@ document.getElementById('leadForm').addEventListener('submit', async e => {
   const email   = document.getElementById('leadEmail').value.trim();
   const company = document.getElementById('leadCompany').value.trim();
 
-  if (!email || !email.includes('@')) {
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     document.getElementById('leadEmail').focus();
     return;
   }
@@ -2232,7 +2242,8 @@ function renderSearchStatus(query) {
 }
 
 function escapeHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 // Accent-insensitive, 1:1 (length-preserving so snippet offsets stay valid).
