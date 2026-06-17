@@ -899,6 +899,57 @@
         <label id="modal-company-label" for="leadCompany">Empresa</label>
         <input type="text"  id="leadCompany" autocomplete="organization" placeholder="Nombre de tu empresa">
       </div>
+      <div class="form-field">
+        <label id="modal-country-label" for="leadCountry">País *</label>
+        <select id="leadCountry" required autocomplete="country">
+          <option value="" id="leadCountryDefault" selected disabled>Selecciona tu país</option>
+          <option value="ES">España</option>
+          <option value="PT">Portugal</option>
+          <option value="FR">Francia</option>
+          <option value="IT">Italia</option>
+          <option value="DE">Alemania</option>
+          <option value="AD">Andorra</option>
+          <option value="GB">Reino Unido</option>
+          <option value="IE">Irlanda</option>
+          <option value="NL">Países Bajos</option>
+          <option value="BE">Bélgica</option>
+          <option value="LU">Luxemburgo</option>
+          <option value="CH">Suiza</option>
+          <option value="AT">Austria</option>
+          <option value="DK">Dinamarca</option>
+          <option value="SE">Suecia</option>
+          <option value="NO">Noruega</option>
+          <option value="FI">Finlandia</option>
+          <option value="PL">Polonia</option>
+          <option value="CZ">Chequia</option>
+          <option value="SK">Eslovaquia</option>
+          <option value="HU">Hungría</option>
+          <option value="RO">Rumanía</option>
+          <option value="BG">Bulgaria</option>
+          <option value="GR">Grecia</option>
+          <option value="HR">Croacia</option>
+          <option value="SI">Eslovenia</option>
+          <option value="RS">Serbia</option>
+          <option value="EE">Estonia</option>
+          <option value="LV">Letonia</option>
+          <option value="LT">Lituania</option>
+          <option value="US">Estados Unidos</option>
+          <option value="CA">Canadá</option>
+          <option value="MX">México</option>
+          <option value="BR">Brasil</option>
+          <option value="AR">Argentina</option>
+          <option value="CL">Chile</option>
+          <option value="CO">Colombia</option>
+          <option value="PE">Perú</option>
+          <option value="MA">Marruecos</option>
+          <option value="DZ">Argelia</option>
+          <option value="TN">Túnez</option>
+          <option value="AE">Emiratos Árabes Unidos</option>
+          <option value="SA">Arabia Saudí</option>
+          <option value="QA">Catar</option>
+          <option value="OT">Otro</option>
+        </select>
+      </div>
       <div class="form-field form-privacy">
         <label class="privacy-label">
           <input type="checkbox" id="leadPrivacy">
@@ -1681,6 +1732,15 @@ document.getElementById('langSelect').addEventListener('change', e => setLang(e.
 const LEAD_WEBHOOK   = 'https://hook.eu2.make.com/mwd601h4jm5tlgo2glc1aw4fkuyf2gs7';
 const LEAD_LS_KEY    = 'eurast_lead_submitted';
 const LANG_TO_COUNTRY = { es: 'ES', en: 'INT', fr: 'FR', de: 'DE', it: 'IT', pt: 'PT' };
+// Localized label + placeholder for the mandatory country field
+const MODAL_COUNTRY = {
+  es: { label: 'País *', ph: 'Selecciona tu país' },
+  en: { label: 'Country *', ph: 'Select your country' },
+  fr: { label: 'Pays *', ph: 'Sélectionnez votre pays' },
+  de: { label: 'Land *', ph: 'Wählen Sie Ihr Land' },
+  it: { label: 'Paese *', ph: 'Seleziona il tuo paese' },
+  pt: { label: 'País *', ph: 'Selecione o seu país' },
+};
 
 function updateModal(lang) {
   const m = STRINGS[lang].modal;
@@ -1690,6 +1750,9 @@ function updateModal(lang) {
   document.getElementById('leadEmail').placeholder           = m.emailPh;
   document.getElementById('modal-company-label').textContent = m.companyLabel;
   document.getElementById('leadCompany').placeholder         = m.companyPh;
+  const c = MODAL_COUNTRY[lang] || MODAL_COUNTRY.es;
+  document.getElementById('modal-country-label').textContent = c.label;
+  document.getElementById('leadCountryDefault').textContent  = c.ph;
   document.getElementById('modal-privacy-span').innerHTML    = m.privacyHtml;
   const submitBtn = document.getElementById('modal-submit');
   submitBtn.textContent = m.submit;
@@ -1713,13 +1776,13 @@ function openModal() {
 function closeModal() {
   document.getElementById('leadModal').hidden = true;
   document.getElementById('leadPrivacy').checked = false;
+  document.getElementById('leadCountry').value = '';
   const btn = document.getElementById('modal-submit');
   btn.disabled    = true;
   btn.textContent = STRINGS[currentLang].modal.submit;
 }
 
-async function submitLead(email, company) {
-  const country = LANG_TO_COUNTRY[currentLang] || currentLang.toUpperCase();
+async function submitLead(email, company, countryCode, countryName) {
   const btn = document.getElementById('modal-submit');
   btn.disabled    = true;
   btn.textContent = STRINGS[currentLang].modal.sending;
@@ -1734,10 +1797,11 @@ async function submitLead(email, company) {
     body: new URLSearchParams({
       email,
       company,
-      country,
-      language: currentLang,
-      source:   'cataleg_download',
-      token:    'EUR_CAT_2026',
+      country:      countryCode,   // ISO-2 of the country chosen by the user
+      country_name: countryName,   // human-readable name of that country
+      language:     currentLang,   // UI language (es/en/fr/de/it/pt)
+      source:       'cataleg_download',
+      token:        'EUR_CAT_2026',
     }),
   }).catch(err => console.warn('Lead webhook error:', err));
 
@@ -1758,10 +1822,14 @@ document.getElementById('btn-dl').addEventListener('click', e => {
   openModal();
 });
 
-// Checkbox enables/disables the submit button
-document.getElementById('leadPrivacy').addEventListener('change', e => {
-  document.getElementById('modal-submit').disabled = !e.target.checked;
-});
+// Submit is enabled only when privacy is accepted AND a country is chosen
+function updateLeadSubmitState() {
+  const ok = document.getElementById('leadPrivacy').checked
+          && !!document.getElementById('leadCountry').value;
+  document.getElementById('modal-submit').disabled = !ok;
+}
+document.getElementById('leadPrivacy').addEventListener('change', updateLeadSubmitState);
+document.getElementById('leadCountry').addEventListener('change', updateLeadSubmitState);
 
 // Close modal on backdrop click or X button
 document.getElementById('leadModal').addEventListener('click', e => {
@@ -1769,17 +1837,21 @@ document.getElementById('leadModal').addEventListener('click', e => {
 });
 document.getElementById('modalClose').addEventListener('click', closeModal);
 
-// Form submit — requires email + privacy checkbox
+// Form submit — requires email + country + privacy checkbox
 document.getElementById('leadForm').addEventListener('submit', async e => {
   e.preventDefault();
-  const email   = document.getElementById('leadEmail').value.trim();
-  const company = document.getElementById('leadCompany').value.trim();
+  const email     = document.getElementById('leadEmail').value.trim();
+  const company   = document.getElementById('leadCompany').value.trim();
+  const countrySel = document.getElementById('leadCountry');
+  const countryCode = countrySel.value;
+  const countryName = countryCode ? countrySel.options[countrySel.selectedIndex].text : '';
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     document.getElementById('leadEmail').focus();
     return;
   }
-  await submitLead(email, company);
+  if (!countryCode) { countrySel.focus(); return; }
+  await submitLead(email, company, countryCode, countryName);
 });
 
 // ── MOBILE SIDEBAR TOGGLE ──────────────────────────────────────────
