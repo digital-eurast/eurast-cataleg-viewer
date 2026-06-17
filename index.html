@@ -489,6 +489,26 @@
     .form-field input::placeholder { color: var(--grey-md); font-weight: 400; }
     .form-field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A9A9AA' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; padding-right: 30px; }
 
+    /* country combobox (type-to-search) */
+    .combo-field { position: relative; }
+    .combo-list {
+      position: absolute; top: 100%; left: 0; right: 0;
+      margin-top: 4px;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      max-height: 210px; overflow-y: auto;
+      z-index: 1010;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.16);
+    }
+    .combo-list[hidden] { display: none; }
+    .combo-item {
+      padding: 9px 12px; cursor: pointer; font-size: 13px; color: var(--text);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .combo-item:hover, .combo-item.active { background: rgba(237,105,44,.10); }
+    .combo-empty { padding: 9px 12px; font-size: 12px; color: var(--grey-md); }
+
     .btn-modal-submit {
       width: 100%; padding: 12px;
       background: var(--primary); color: #fff;
@@ -899,56 +919,11 @@
         <label id="modal-company-label" for="leadCompany">Empresa</label>
         <input type="text"  id="leadCompany" autocomplete="organization" placeholder="Nombre de tu empresa">
       </div>
-      <div class="form-field">
-        <label id="modal-country-label" for="leadCountry">País *</label>
-        <select id="leadCountry" required autocomplete="country">
-          <option value="" id="leadCountryDefault" selected disabled>Selecciona tu país</option>
-          <option value="ES">España</option>
-          <option value="PT">Portugal</option>
-          <option value="FR">Francia</option>
-          <option value="IT">Italia</option>
-          <option value="DE">Alemania</option>
-          <option value="AD">Andorra</option>
-          <option value="GB">Reino Unido</option>
-          <option value="IE">Irlanda</option>
-          <option value="NL">Países Bajos</option>
-          <option value="BE">Bélgica</option>
-          <option value="LU">Luxemburgo</option>
-          <option value="CH">Suiza</option>
-          <option value="AT">Austria</option>
-          <option value="DK">Dinamarca</option>
-          <option value="SE">Suecia</option>
-          <option value="NO">Noruega</option>
-          <option value="FI">Finlandia</option>
-          <option value="PL">Polonia</option>
-          <option value="CZ">Chequia</option>
-          <option value="SK">Eslovaquia</option>
-          <option value="HU">Hungría</option>
-          <option value="RO">Rumanía</option>
-          <option value="BG">Bulgaria</option>
-          <option value="GR">Grecia</option>
-          <option value="HR">Croacia</option>
-          <option value="SI">Eslovenia</option>
-          <option value="RS">Serbia</option>
-          <option value="EE">Estonia</option>
-          <option value="LV">Letonia</option>
-          <option value="LT">Lituania</option>
-          <option value="US">Estados Unidos</option>
-          <option value="CA">Canadá</option>
-          <option value="MX">México</option>
-          <option value="BR">Brasil</option>
-          <option value="AR">Argentina</option>
-          <option value="CL">Chile</option>
-          <option value="CO">Colombia</option>
-          <option value="PE">Perú</option>
-          <option value="MA">Marruecos</option>
-          <option value="DZ">Argelia</option>
-          <option value="TN">Túnez</option>
-          <option value="AE">Emiratos Árabes Unidos</option>
-          <option value="SA">Arabia Saudí</option>
-          <option value="QA">Catar</option>
-          <option value="OT">Otro</option>
-        </select>
+      <div class="form-field combo-field">
+        <label id="modal-country-label" for="leadCountryInput">País *</label>
+        <input type="text" id="leadCountryInput" autocomplete="off" role="combobox" aria-autocomplete="list" placeholder="Escribe tu país…">
+        <input type="hidden" id="leadCountry">
+        <div id="leadCountryList" class="combo-list" hidden></div>
       </div>
       <div class="form-field form-privacy">
         <label class="privacy-label">
@@ -1742,6 +1717,109 @@ const MODAL_COUNTRY = {
   pt: { label: 'País *', ph: 'Selecione o seu país' },
 };
 
+// ── COUNTRY COMBOBOX (type-to-search, localized via Intl.DisplayNames) ──
+const COUNTRY_CODES = "AF AL DZ AD AO AG AR AM AU AT AZ BS BH BD BB BY BE BZ BJ BT BO BA BW BR BN BG BF BI KH CM CA CV CF TD CL CN CO KM CG CD CR CI HR CU CY CZ DK DJ DM DO EC EG SV GQ ER EE SZ ET FJ FI FR GA GM GE DE GH GR GD GT GN GW GY HT HN HU IS IN ID IR IQ IE IL IT JM JP JO KZ KE KI KW KG LA LV LB LS LR LY LI LT LU MG MW MY MV ML MT MH MR MU MX FM MD MC MN ME MA MZ MM NA NR NP NL NZ NI NE NG NO OM PK PW PA PG PY PE PH PL PT QA RO RU RW KN LC VC WS SM ST SA SN RS SC SL SG SK SI SB SO ZA KR SS ES LK SD SR SE CH SY TW TJ TZ TH TL TG TO TT TN TR TM TV UG UA AE GB US UY UZ VU VE VN YE ZM ZW".split(' ');
+const _countryCache = {};
+function localizedCountries(lang) {
+  if (_countryCache[lang]) return _countryCache[lang];
+  let dn = null;
+  try { dn = new Intl.DisplayNames([lang], { type: 'region' }); } catch(_) {}
+  const list = COUNTRY_CODES.map(code => {
+    let name = code;
+    try { if (dn) name = dn.of(code) || code; } catch(_) {}
+    return { code, name };
+  }).sort((a, b) => a.name.localeCompare(b.name, lang));
+  _countryCache[lang] = list;
+  return list;
+}
+
+let _comboItems = [];
+let _comboFiltered = [];
+let _comboActive = -1;
+
+// Rebuild the localized list; keep the displayed name of an already-picked country in sync
+function refreshCountryCombo(lang) {
+  _comboItems = localizedCountries(lang);
+  const hidden = document.getElementById('leadCountry');
+  if (hidden.value) {
+    const found = _comboItems.find(c => c.code === hidden.value);
+    if (found) {
+      document.getElementById('leadCountryInput').value = found.name;
+      hidden.dataset.name = found.name;
+    }
+  }
+}
+
+function renderCombo(query) {
+  const list = document.getElementById('leadCountryList');
+  const q = deburr(query.trim());
+  let items;
+  if (!q) {
+    items = _comboItems;
+  } else {
+    const starts = [], has = [];
+    for (const it of _comboItems) {
+      const n = deburr(it.name);
+      if (n.startsWith(q)) starts.push(it);
+      else if (n.includes(q) || it.code.toLowerCase() === q) has.push(it);
+    }
+    items = starts.concat(has);
+  }
+  _comboFiltered = items.slice(0, 60);
+  _comboActive = -1;
+  list.innerHTML = _comboFiltered.length
+    ? _comboFiltered.map((it, i) => `<div class="combo-item" data-i="${i}">${escapeHtml(it.name)}</div>`).join('')
+    : '<div class="combo-empty">—</div>';
+  list.hidden = false;
+}
+
+function selectCombo(it) {
+  document.getElementById('leadCountryInput').value = it.name;
+  const hidden = document.getElementById('leadCountry');
+  hidden.value = it.code;
+  hidden.dataset.name = it.name;
+  document.getElementById('leadCountryList').hidden = true;
+  updateLeadSubmitState();
+}
+function closeCombo() { document.getElementById('leadCountryList').hidden = true; }
+
+(function wireCombo() {
+  const input = document.getElementById('leadCountryInput');
+  const list  = document.getElementById('leadCountryList');
+  input.addEventListener('focus', () => renderCombo(input.value));
+  input.addEventListener('input', () => {
+    const hidden = document.getElementById('leadCountry');
+    hidden.value = ''; delete hidden.dataset.name; // typing invalidates a prior pick
+    updateLeadSubmitState();
+    renderCombo(input.value);
+  });
+  input.addEventListener('keydown', e => {
+    if (list.hidden) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const n = _comboFiltered.length; if (!n) return;
+      _comboActive = (_comboActive + (e.key === 'ArrowDown' ? 1 : -1) + n) % n;
+      [...list.children].forEach((el, i) => el.classList.toggle('active', i === _comboActive));
+      list.children[_comboActive]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const pick = _comboActive >= 0 ? _comboFiltered[_comboActive] : _comboFiltered[0];
+      if (pick) selectCombo(pick);
+    } else if (e.key === 'Escape') {
+      closeCombo();
+    }
+  });
+  // mousedown (not click) so it fires before the input's blur hides the list
+  list.addEventListener('mousedown', e => {
+    const item = e.target.closest('.combo-item');
+    if (!item) return;
+    e.preventDefault();
+    const it = _comboFiltered[parseInt(item.dataset.i)];
+    if (it) selectCombo(it);
+  });
+  input.addEventListener('blur', () => setTimeout(closeCombo, 150));
+})();
+
 function updateModal(lang) {
   const m = STRINGS[lang].modal;
   document.getElementById('modal-title').textContent         = m.title;
@@ -1752,7 +1830,8 @@ function updateModal(lang) {
   document.getElementById('leadCompany').placeholder         = m.companyPh;
   const c = MODAL_COUNTRY[lang] || MODAL_COUNTRY.es;
   document.getElementById('modal-country-label').textContent = c.label;
-  document.getElementById('leadCountryDefault').textContent  = c.ph;
+  document.getElementById('leadCountryInput').placeholder    = c.ph;
+  refreshCountryCombo(lang);
   document.getElementById('modal-privacy-span').innerHTML    = m.privacyHtml;
   const submitBtn = document.getElementById('modal-submit');
   submitBtn.textContent = m.submit;
@@ -1777,6 +1856,8 @@ function closeModal() {
   document.getElementById('leadModal').hidden = true;
   document.getElementById('leadPrivacy').checked = false;
   document.getElementById('leadCountry').value = '';
+  document.getElementById('leadCountryInput').value = '';
+  closeCombo();
   const btn = document.getElementById('modal-submit');
   btn.disabled    = true;
   btn.textContent = STRINGS[currentLang].modal.submit;
@@ -1842,15 +1923,15 @@ document.getElementById('leadForm').addEventListener('submit', async e => {
   e.preventDefault();
   const email     = document.getElementById('leadEmail').value.trim();
   const company   = document.getElementById('leadCompany').value.trim();
-  const countrySel = document.getElementById('leadCountry');
-  const countryCode = countrySel.value;
-  const countryName = countryCode ? countrySel.options[countrySel.selectedIndex].text : '';
+  const hiddenC    = document.getElementById('leadCountry');
+  const countryCode = hiddenC.value;
+  const countryName = hiddenC.dataset.name || '';
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     document.getElementById('leadEmail').focus();
     return;
   }
-  if (!countryCode) { countrySel.focus(); return; }
+  if (!countryCode) { document.getElementById('leadCountryInput').focus(); return; }
   await submitLead(email, company, countryCode, countryName);
 });
 
