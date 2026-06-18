@@ -391,7 +391,7 @@
       align-items: center;
       justify-content: center;
       z-index: 999;
-      gap: 20px;
+      gap: 16px;
       transition: opacity .4s;
     }
     #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
@@ -412,17 +412,47 @@
     .loading-logo {
       height: 64px;
       width: auto;
+      animation: logoReveal .6s cubic-bezier(0.16, 1, 0.3, 1) both,
+                 logoBreath 2.8s ease-in-out .6s infinite;
     }
-    .spinner {
-      width: 34px; height: 34px;
-      border: 3px solid var(--border);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin .75s linear infinite;
+    @keyframes logoReveal {
+      from { opacity: 0; transform: scale(0.93) translateY(4px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-pct { font-size: 21px; font-weight: 700; color: var(--primary); }
+    @keyframes logoBreath {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.025); }
+    }
+    .loading-ring-wrap {
+      position: relative;
+      width: 72px; height: 72px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .loading-ring {
+      position: absolute; inset: 0;
+      animation: ringSlowSpin 5s linear infinite;
+      transform-origin: center;
+    }
+    @keyframes ringSlowSpin { to { transform: rotate(360deg); } }
+    .ring-track { fill: none; stroke: var(--border); stroke-width: 3; }
+    .ring-fill {
+      fill: none; stroke: var(--primary); stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 188.5;
+      stroke-dashoffset: 158.5;
+      transition: stroke-dashoffset .4s ease-out;
+    }
+    .loading-pct {
+      position: relative; z-index: 1;
+      font-size: 12px; font-weight: 700; color: var(--primary);
+      font-variant-numeric: tabular-nums;
+    }
     .loading-sub { font-size: 12px; color: var(--grey-md); font-weight: 500; }
+    @media (prefers-reduced-motion: reduce) {
+      .loading-logo { animation: none !important; opacity: 1; }
+      .loading-ring { animation: none !important; }
+      .ring-fill { transition: none !important; }
+    }
 
     /* ── LEAD CAPTURE MODAL ─────────────────────────────────────────── */
     .modal-overlay {
@@ -951,8 +981,13 @@
 
 <div id="loadingOverlay">
   <img src="logo.png" class="loading-logo" alt="EURAST">
-  <div class="spinner"></div>
-  <div class="loading-pct" id="pct">0%</div>
+  <div class="loading-ring-wrap">
+    <svg class="loading-ring" viewBox="0 0 72 72" aria-hidden="true">
+      <circle class="ring-track" cx="36" cy="36" r="30"/>
+      <circle class="ring-fill" id="ringFill" cx="36" cy="36" r="30" transform="rotate(-90 36 36)"/>
+    </svg>
+    <span class="loading-pct" id="pct">0%</span>
+  </div>
   <div class="loading-sub" id="loading-sub">La primera página aparecerá en unos segundos</div>
 </div>
 <div id="errorOverlay" hidden>
@@ -1333,8 +1368,13 @@ const GROUPS = [
 // ── LOAD PDF ───────────────────────────────────────────────────────
 const task = pdfjsLib.getDocument({ url: 'cataleg.pdf', rangeChunkSize: 65536 });
 task.onProgress = ({ loaded, total }) => {
-  if (total) document.getElementById('pct').textContent =
-    Math.round(loaded / total * 100) + '%';
+  if (!total) return;
+  const pct = Math.round(loaded / total * 100);
+  document.getElementById('pct').textContent = pct + '%';
+  const circ = 188.5;
+  const arcLen = Math.max(30, pct / 100 * circ);
+  const fill = document.getElementById('ringFill');
+  if (fill) fill.style.strokeDashoffset = (circ - arcLen).toFixed(1);
 };
 pdf = await task.promise;
 totalPages = pdf.numPages;
