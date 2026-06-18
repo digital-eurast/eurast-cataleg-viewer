@@ -1486,9 +1486,10 @@ const hashMatch = initialHash.match(/^#pag=(\d+)$/);
 const hashTarget = hashMatch ? parseInt(hashMatch[1]) : 1;
 if (hashTarget > 1 && hashTarget <= totalPages) goTo(hashTarget);
 
-// Set initial language from ?lang= URL param (used by per-segment email links)
+// Set initial language from ?lang= URL param (used by per-segment email links).
+// langParam is read here (before MODAL_COUNTRY is initialized), but setLang()
+// must be called later — after MODAL_COUNTRY and combobox constants are declared.
 const langParam = new URLSearchParams(location.search).get('lang');
-if (langParam && STRINGS[langParam]) setLang(langParam);
 
 // ── FLIP BOOK (desktop only, lazy — scroll is default) ────────────
 if (!IS_MOBILE && typeof St !== 'undefined') {
@@ -1749,6 +1750,9 @@ function refreshCountryCombo(lang) {
     }
   }
 }
+
+// Now that MODAL_COUNTRY and combobox constants are initialized, apply ?lang= param.
+if (langParam && STRINGS[langParam]) setLang(langParam);
 
 function renderCombo(query) {
   const list = document.getElementById('leadCountryList');
