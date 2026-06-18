@@ -395,6 +395,19 @@
       transition: opacity .4s;
     }
     #loadingOverlay.hidden { opacity: 0; pointer-events: none; }
+    #errorOverlay {
+      position: fixed; inset: 0; background: var(--surface);
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; z-index: 1000; gap: 16px; padding: 24px;
+      text-align: center;
+    }
+    #errorOverlay[hidden] { display: none !important; }
+    #errorOverlay .err-icon { font-size: 40px; }
+    #errorOverlay .err-msg { font-size: 15px; font-weight: 600; color: var(--text); max-width: 360px; }
+    #errorOverlay .err-sub { font-size: 12px; color: var(--grey-md); max-width: 360px; }
+    #errorOverlay .err-btn { background: var(--primary); color: #fff; border: none;
+      border-radius: 8px; padding: 10px 24px; font-size: 14px; font-weight: 600;
+      cursor: pointer; margin-top: 8px; }
 
     .loading-logo {
       height: 64px;
@@ -942,6 +955,12 @@
   <div class="loading-pct" id="pct">0%</div>
   <div class="loading-sub" id="loading-sub">La primera página aparecerá en unos segundos</div>
 </div>
+<div id="errorOverlay" hidden>
+  <span class="err-icon">⚠️</span>
+  <p class="err-msg" id="errMsg">No s'ha pogut carregar el catàleg</p>
+  <p class="err-sub" id="errSub">Comprova la connexió a internet i torna-ho a intentar.</p>
+  <button class="err-btn" onclick="location.reload()">Recarregar pàgina</button>
+</div>
 
 <header>
   <a class="logo" href="https://eurast.com/es/" target="_blank" rel="noopener">
@@ -1078,6 +1097,18 @@
 
 <script type="module">
 import * as pdfjsLib from 'https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.min.mjs';
+
+// ── ERROR GUARD ────────────────────────────────────────────────────
+// Any uncaught module error surfaces here instead of leaving the user
+// staring at an empty white page.
+function showErrorOverlay(detail) {
+  const el = document.getElementById('errorOverlay');
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) { overlay.classList.add('hidden'); setTimeout(() => overlay.remove(), 500); }
+  if (el) el.removeAttribute('hidden');
+  if (detail) console.error('[EURAST viewer]', detail);
+}
+window.addEventListener('unhandledrejection', e => showErrorOverlay(e.reason));
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
 
@@ -1317,6 +1348,13 @@ const overlay = document.getElementById('loadingOverlay');
 overlay.classList.add('hidden');
 setTimeout(() => overlay.remove(), 500);
 
+// Watchdog: if no page renders within 25 s, offer a reload.
+const _renderWatchdog = setTimeout(() => {
+  if (document.querySelectorAll('.page-slot canvas').length === 0) {
+    showErrorOverlay('Watchdog: cap pàgina renderitzada en 25 s');
+  }
+}, 25000);
+
 // ── SAMPLE PAGE RATIO (with A4 fallback) ──────────────────────────
 // Wrap in try/catch with timeout so a failed getPage(1) doesn't
 // stop initialization
@@ -1413,6 +1451,7 @@ async function renderSlot(num) {
       await entry.task.promise;
       rendered.add(num);
       slot.querySelector('.page-loader')?.remove();
+      clearTimeout(_renderWatchdog); // first successful render cancels the watchdog
 
       // Text layer — transparent overlay for text selection / copy
       try {
