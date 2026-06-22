@@ -943,6 +943,17 @@
       border-radius: 2px; padding: 0 1px; font-style: normal;
     }
   </style>
+  <script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]);t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+" (stub)"},o="init push capture getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures onFeatureFlags posthogPersistence".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('phc_pCw8ahDDsmt7NPPGRvMj5ZewRNfF8p3zoa77BF9WdpER', {
+      api_host: 'https://eu.i.posthog.com',
+      person_profiles: 'identified_only',
+      persistence: 'memory',
+      autocapture: false,
+      disable_session_recording: true,
+      capture_pageview: true,
+    });
+  </script>
 </head>
 <body>
 
@@ -1728,7 +1739,9 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
   }
 
   document.getElementById('btnFlipMode').addEventListener('click', () => {
+    const newMode = flipModeActive ? 'scroll' : 'flip';
     if (flipModeActive) activateScrollMode(); else activateFlipMode();
+    posthog.capture('view_mode_changed', { mode: newMode });
   });
 }
 
@@ -1740,6 +1753,7 @@ GROUPS.forEach((g, idx) => {
   btn.innerHTML = `<span class="nav-badge">${g.id}</span><span class="nav-name">${g[currentLang]}</span>`;
   btn.addEventListener('click', () => {
     goTo(g.page);
+    posthog.capture('group_navigated', { group_id: g.id, group_name: g[currentLang] });
     // Reveal the top group-nav dropdown (at this group's page view) so the
     // user discovers they can also pick a page from the toolbar. Deferred so
     // the document-level "click outside → close" handler (which fires on this
@@ -1932,6 +1946,7 @@ function triggerDownload() {
 function openModal() {
   updateModal(currentLang);
   document.getElementById('leadModal').hidden = false;
+  posthog.capture('download_form_opened', { lang: currentLang });
   setTimeout(() => document.getElementById('leadEmail').focus(), 80);
 }
 
@@ -1954,6 +1969,7 @@ async function submitLead(email, company, countryCode, countryName) {
   // Persist a non-PII flag so returning visitors skip the modal
   // (no guardem l'email en clar a localStorage)
   localStorage.setItem(LEAD_LS_KEY, '1');
+  posthog.capture('download_submitted', { country: countryCode, lang: currentLang });
 
   const sendPromise = fetch(LEAD_WEBHOOK, {
     method:  'POST',
@@ -2178,6 +2194,7 @@ function updatePagesIcon() {
 }
 document.getElementById('btnPages').addEventListener('click', () => {
   twoPage = !twoPage;
+  posthog.capture('view_mode_changed', { mode: twoPage ? '2pages' : '1page' });
   updatePagesIcon();
   if (flipModeActive) {
     if (flipSetPages) flipSetPages();
@@ -2523,8 +2540,10 @@ function loadFavs() {
 function saveFavs() { try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch(_) {} }
 function isFav(ref) { return favs.some(f => f.ref === ref); }
 function toggleFav(r) {
+  const action = isFav(r.ref) ? 'remove' : 'add';
   if (isFav(r.ref)) favs = favs.filter(f => f.ref !== r.ref);
   else favs.unshift({ ref: r.ref, family: r.family || '', page: r.page, gIdx: r.gIdx });
+  posthog.capture('favorite_toggled', { action, ref: r.ref, group_id: GROUPS[r.gIdx]?.id });
   saveFavs();
   updateFavBtn();
 }
@@ -2549,7 +2568,7 @@ function makeRefRow(r, onStarToggle) {
     <span class="search-result-page">${escapeHtml(r.ref)}</span>
     <span class="search-result-snippet">${famHtml}</span>
     <span class="fav-star${isFav(r.ref) ? ' on' : ''}" role="button" aria-label="Favorito">${STAR_SVG}</span>`;
-  btn.addEventListener('click', () => { goTo(r.page); closeSearch(); closeFavs(); highlightRef(r.page, r.ref); });
+  btn.addEventListener('click', () => { posthog.capture('reference_clicked', { ref: r.ref, page: r.page, group_id: g.id }); goTo(r.page); closeSearch(); closeFavs(); highlightRef(r.page, r.ref); });
   const star = btn.querySelector('.fav-star');
   star.addEventListener('click', e => {
     e.stopPropagation();
@@ -2617,6 +2636,7 @@ function doSearch(query) {
 
   if (refs.length) {
     setSearchStatus(refs.length);
+    posthog.capture('search_performed', { query, result_count: refs.length, search_type: 'reference' });
     resultsEl.innerHTML = '';
     refs.slice(0, 60).forEach(r => resultsEl.appendChild(makeRefRow(r)));
     return;
@@ -2656,6 +2676,7 @@ function fullTextSearch(q, qNorm) {
   }
   hits.sort((a, b) => a.page - b.page);
   setSearchStatus(hits.length);
+  posthog.capture('search_performed', { query: q, result_count: hits.length, search_type: 'fulltext' });
 
   const s = STRINGS[currentLang].search;
   resultsEl.innerHTML = '';
@@ -2668,7 +2689,7 @@ function fullTextSearch(q, qNorm) {
     btn.innerHTML = `<span class="search-result-badge">${g.id}</span>
       <span class="search-result-page">${s.pageAbbr} ${h.page}</span>
       <span class="search-result-snippet">${snip}</span>`;
-    btn.addEventListener('click', () => { goTo(h.page); closeSearch(); });
+    btn.addEventListener('click', () => { posthog.capture('search_result_clicked', { page: h.page, group_id: g.id, search_type: 'fulltext' }); goTo(h.page); closeSearch(); });
     resultsEl.appendChild(btn);
   });
 }
