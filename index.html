@@ -316,11 +316,11 @@
     .textLayer {
       position: absolute;
       inset: 0;
-      overflow: hidden;
+      overflow: visible;
       color: transparent;
       line-height: 1;
       transform-origin: 0 0;
-      pointer-events: none;
+      pointer-events: all;
     }
     .textLayer span {
       color: transparent;
@@ -330,6 +330,21 @@
       cursor: text;
       pointer-events: all;
       user-select: text;
+      /* Expand hit area: vertical ±6px (not affected by scaleX) + 0.4em rightward.
+         margin-top compensates the padding-top so visual text doesn't shift. */
+      padding-top: 8px;
+      margin-top: -8px;
+      padding-bottom: 8px;
+      padding-right: 0.6em;
+    }
+    .textLayer span::before {
+      content: '';
+      position: absolute;
+      left: -20px;
+      width: 20px;
+      top: 0;
+      bottom: 0;
+      cursor: text;
     }
     .textLayer ::selection { background: rgba(0, 100, 255, 0.25); }
 
@@ -1528,6 +1543,7 @@ async function renderSlot(num) {
         });
         await tl.render();
         cleanTextLayerSelection(textDiv);
+        addGapSelectionHelper(textDiv);
       } catch(_) {}
     } catch(e) {
       // render cancelled or page fetch failed — ignore
@@ -2253,6 +2269,63 @@ document.addEventListener('keydown', e => {
     if (flipModeActive && flipBook_instance) flipBook_instance.flipPrev(); else goTo(currentPage - 1);
   }
 });
+
+// ── GAP-CLICK SELECTION HELPER ──────────────────────────────────────
+// .textLayer has pointer-events:all so clicks in gaps between spans reach it.
+// This handler snaps the cursor (or drag anchor) to the nearest text char
+// using the browser's native caretRangeFromPoint / caretPositionFromPoint.
+function addGapSelectionHelper(container) {
+  let anchorNode = null, anchorOffset = 0;
+
+  function posAtPoint(x, y) {
+    // Chrome/Safari
+    if (document.caretRangeFromPoint) {
+      const r = document.caretRangeFromPoint(x, y);
+      if (r && container.contains(r.startContainer))
+        return { node: r.startContainer, offset: r.startOffset };
+    }
+    // Firefox
+    if (document.caretPositionFromPoint) {
+      const pos = document.caretPositionFromPoint(x, y);
+      if (pos && container.contains(pos.offsetNode))
+        return { node: pos.offsetNode, offset: pos.offset };
+    }
+    // Fallback: nearest visible span by Euclidean distance
+    const spans = Array.from(container.querySelectorAll('span'));
+    let best = null, bestDist = Infinity;
+    for (const s of spans) {
+      if (!s.firstChild) continue;
+      const r = s.getBoundingClientRect();
+      const dx = Math.max(r.left - x, 0, x - r.right);
+      const dy = Math.max(r.top - y, 0, y - r.bottom);
+      const d = Math.hypot(dx, dy);
+      if (d < bestDist) { bestDist = d; best = s; }
+    }
+    if (!best || bestDist > 80) return null;
+    const rect = best.getBoundingClientRect();
+    const node = best.firstChild;
+    return { node, offset: x > (rect.left + rect.right) / 2 ? node.length : 0 };
+  }
+
+  container.addEventListener('mousedown', function(e) {
+    if (e.target !== this) { anchorNode = null; return; } // span click — browser handles
+    e.preventDefault();
+    const pos = posAtPoint(e.clientX, e.clientY);
+    if (!pos) return;
+    anchorNode = pos.node; anchorOffset = pos.offset;
+    window.getSelection().collapse(anchorNode, anchorOffset);
+  }, { passive: false });
+
+  container.addEventListener('mousemove', function(e) {
+    if (!anchorNode || !(e.buttons & 1)) return;
+    const pos = posAtPoint(e.clientX, e.clientY);
+    if (!pos) return;
+    try { window.getSelection().setBaseAndExtent(anchorNode, anchorOffset, pos.node, pos.offset); }
+    catch (_) {}
+  });
+
+  container.addEventListener('mouseup', () => { anchorNode = null; });
+}
 
 // ── CLEAN TEXT-LAYER SELECTION ─────────────────────────────────────
 // PDF.js pads table cells with trailing spaces in the text layer; with
