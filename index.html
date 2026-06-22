@@ -800,6 +800,13 @@
       border-radius: 7px; padding: 9px; font-size: 14px; font-weight: 700; cursor: pointer;
     }
     .drop-go-btn:hover { filter: brightness(1.08); }
+    .drop-close-btn {
+      position: absolute; top: 7px; right: 9px; z-index: 1;
+      background: none; border: none; cursor: pointer;
+      font-size: 16px; line-height: 1; color: #bbb;
+      padding: 2px 5px; border-radius: 4px;
+    }
+    .drop-close-btn:hover { color: #555; background: #f0f0ea; }
 
     /* ── SEARCH BUTTON ── */
     .btn-search {
@@ -1106,6 +1113,7 @@
           <span id="pillGroupId">G01</span><span class="pill-sep">·</span><span id="pillGroupName"></span><span class="pill-sep">·</span><span id="pillSubPage">1</span><span class="pill-sep">/</span><span id="pillSubTotal">—</span><span class="pill-chevron">▾</span>
         </button>
         <div id="groupDropdown" hidden>
+          <button class="drop-close-btn" id="dropClose">×</button>
           <div id="dropStep1">
             <div class="drop-hdr" id="dropHdrText"></div>
             <div id="dropGroupList"></div>
@@ -2140,6 +2148,7 @@ function applyZoom() {
     s.style.width  = w + 'px';
     s.style.height = Math.round(w * sampleRatio) + 'px';
   });
+  slots[currentPage - 1]?.scrollIntoView({ behavior: 'instant', block: 'start' });
 
   clearTimeout(zoomTimer);
   zoomTimer = setTimeout(() => {
@@ -2148,6 +2157,7 @@ function applyZoom() {
     renderQueue.clear();
     rendered.clear();
     slots.forEach(s => { s.innerHTML = LOADER_HTML; });
+    slots[currentPage - 1]?.scrollIntoView({ behavior: 'instant', block: 'start' });
     renderSlot(currentPage);
     for (let i = Math.max(1, currentPage - PRERENDER); i <= Math.min(totalPages, currentPage + PRERENDER); i++) {
       renderSlot(i);
@@ -2388,14 +2398,24 @@ function openDropStep2(groupIdx, focusInput = true) {
 
 // Open the toolbar group dropdown directly at a group's page view (step 2).
 // Used by the left index so clicking a group also reveals the top page picker.
+let dropScrollEnableTimer = null;
+let dropCloseOnScroll = false;
+
 function openGroupDropdownAtGroup(groupIdx) {
   document.getElementById('groupDropdown').hidden = false;
   openDropStep2(groupIdx, !IS_MOBILE);
+  // Enable scroll-to-close after a short delay so the programmatic goTo() scroll
+  // that just happened doesn't immediately close the dropdown.
+  clearTimeout(dropScrollEnableTimer);
+  dropCloseOnScroll = false;
+  dropScrollEnableTimer = setTimeout(() => { dropCloseOnScroll = true; }, 400);
 }
 
 function openGroupDropdown() {
   const dd = document.getElementById('groupDropdown');
   if (!dd.hidden) { dd.hidden = true; return; }
+  dropCloseOnScroll = false;
+  clearTimeout(dropScrollEnableTimer);
   document.getElementById('dropStep1').hidden = false;
   document.getElementById('dropStep2').hidden = true;
   document.getElementById('dropHdrText').textContent = DROP_LABEL[currentLang];
@@ -2405,6 +2425,8 @@ function openGroupDropdown() {
 
 function closeGroupDropdown() {
   document.getElementById('groupDropdown').hidden = true;
+  dropCloseOnScroll = false;
+  clearTimeout(dropScrollEnableTimer);
 }
 
 function navigateFromDrop() {
@@ -2417,6 +2439,10 @@ function navigateFromDrop() {
 }
 
 document.getElementById('groupPill').addEventListener('click', openGroupDropdown);
+document.getElementById('dropClose').addEventListener('click', closeGroupDropdown);
+viewer.addEventListener('scroll', () => {
+  if (dropCloseOnScroll) closeGroupDropdown();
+}, { passive: true });
 document.getElementById('dropBack').addEventListener('click', () => {
   document.getElementById('dropStep1').hidden = false;
   document.getElementById('dropStep2').hidden = true;
