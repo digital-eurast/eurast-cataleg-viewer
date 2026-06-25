@@ -1058,7 +1058,7 @@
         capture_pageview: true,
         loaded: function(ph) {
           if (__phViewer) {
-            ph.identify('viewer_' + __phViewer, { name: __phViewer });
+            ph.identify('viewer_' + __phViewer, { name: __phViewer, is_internal: true });
           }
         }
       });
