@@ -2533,10 +2533,10 @@ function updateSubPage(pageNum) {
   document.getElementById('pillGroupId').textContent   = group.id;
   document.getElementById('pillGroupName').textContent = group[currentLang];
   const pgInp = document.getElementById('pillSubPage');
-  pgInp.min   = start;
-  pgInp.max   = end;
-  pgInp.value = pageNum;
-  document.getElementById('pillSubTotal').textContent  = end;
+  pgInp.min   = 1;
+  pgInp.max   = total;
+  pgInp.value = pageNum - start + 1;
+  document.getElementById('pillSubTotal').textContent  = total;
 }
 
 // ── GROUP DROPDOWN ────────────────────────────────────────────────
@@ -2573,9 +2573,10 @@ function closeGroupDropdown() {
 
 function navigateFromPill() {
   const inp = document.getElementById('pillSubPage');
-  const v = Math.max(currentGroupStart, Math.min(currentGroupEnd, parseInt(inp.value) || currentGroupStart));
+  const total = parseInt(inp.max) || 1;
+  const v = Math.max(1, Math.min(total, parseInt(inp.value) || 1));
   inp.value = v;
-  goTo(v);
+  goTo(currentGroupStart + v - 1);
   inp.blur();
 }
 
