@@ -754,26 +754,59 @@
     .btn-page-view svg[hidden] { display: none; }
 
     /* ── SUB-PAGE GROUP ── */
-    .group-nav-wrap { position: relative; flex-shrink: 0; }
+    .group-nav-wrap { position: relative; flex-shrink: 1; min-width: 0; }
     .group-pill {
-      display: inline-flex; align-items: center; gap: 5px;
-      background: var(--primary); color: #fff; border: none;
-      border-radius: 18px; padding: 4px 12px;
-      font-size: 12px; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: stretch; gap: 0;
+      background: var(--primary); color: #fff;
+      border-radius: 18px; overflow: hidden;
+      font-size: 12px; font-weight: 700;
       white-space: nowrap; letter-spacing: 0.01em;
+      max-width: 100%;
     }
-    .group-pill:hover { filter: brightness(1.08); }
+    .pill-zone-left {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 10px 5px 13px;
+      background: none; border: none; color: #fff;
+      cursor: pointer; font-size: 12px; font-weight: 700;
+      font-family: inherit; white-space: nowrap;
+      transition: background 0.12s;
+      min-width: 0; flex-shrink: 1; overflow: hidden;
+    }
+    .pill-zone-left:hover { background: rgba(255,255,255,0.15); }
+    #pillGroupName { overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
+    .pill-zone-divider { width: 1px; background: rgba(255,255,255,0.35); align-self: stretch; margin: 4px 0; flex-shrink: 0; }
+    .pill-zone-right {
+      display: flex; align-items: center; gap: 4px; flex-shrink: 0;
+      padding: 5px 13px 5px 10px;
+      background: rgba(0,0,0,0.15); border-radius: 0 18px 18px 0;
+      cursor: text; transition: background 0.12s;
+    }
+    .pill-zone-right:hover { background: rgba(0,0,0,0.22); }
     .pill-sep { opacity: 0.5; font-weight: 400; }
-    .pill-chevron { font-size: 9px; opacity: 0.7; margin-left: 1px; }
+    .pill-chevron { font-size: 9px; opacity: 0.7; }
+    .pill-pg-input {
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.45);
+      border-radius: 4px; color: #fff;
+      font-weight: 700; font-size: 12px; font-family: inherit;
+      width: 26px; text-align: center; padding: 1px 3px; outline: none; cursor: text;
+      -moz-appearance: textfield;
+    }
+    .pill-pg-input::-webkit-inner-spin-button,
+    .pill-pg-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .pill-pg-input:focus {
+      background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.9);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+    }
 
     #groupDropdown {
       position: absolute; top: calc(100% + 6px); left: 0;
       background: #fff; border: 1px solid #e0e0d8;
       border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-      z-index: 900; min-width: 270px; max-height: 380px; overflow-y: auto;
+      z-index: 900; min-width: 260px; max-height: 380px; overflow-y: auto;
     }
     .drop-hdr {
-      padding: 7px 14px 6px; font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 8px 6px 14px; font-size: 11px; font-weight: 700;
       letter-spacing: 0.07em; text-transform: uppercase; color: #aaa;
       border-bottom: 1px solid #f0f0ea;
       position: sticky; top: 0; background: #fff;
@@ -793,33 +826,10 @@
     .drop-g-badge.dim { background: #e0e0d8; color: #888; }
     .drop-g-name { flex: 1; color: #333; }
     .drop-g-pages { font-size: 11px; color: #c0c0b8; }
-    .drop-step2-inner { padding: 14px; }
-    .drop-back-btn {
-      background: none; border: none; color: var(--primary);
-      font-size: 13px; font-weight: 700; cursor: pointer; padding: 0 0 10px;
-      display: block; text-align: left;
-    }
-    .drop-page-row { display: flex; align-items: center; gap: 8px; margin: 10px 0 14px; }
-    .drop-page-num {
-      width: 62px; border: 2px solid var(--primary); border-radius: 6px;
-      text-align: center; font-size: 20px; font-weight: 700;
-      color: #333; padding: 6px 4px;
-    }
-    .drop-page-num::-webkit-outer-spin-button,
-    .drop-page-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .drop-page-num[type=number] { -moz-appearance: textfield; }
-    .drop-page-of { font-size: 14px; color: #bbb; }
-    .drop-page-total { font-size: 18px; font-weight: 600; color: #555; }
-    .drop-go-btn {
-      width: 100%; background: var(--primary); color: #fff; border: none;
-      border-radius: 7px; padding: 9px; font-size: 14px; font-weight: 700; cursor: pointer;
-    }
-    .drop-go-btn:hover { filter: brightness(1.08); }
     .drop-close-btn {
-      position: absolute; top: 7px; right: 9px; z-index: 1;
       background: none; border: none; cursor: pointer;
       font-size: 16px; line-height: 1; color: #bbb;
-      padding: 2px 5px; border-radius: 4px;
+      padding: 2px 5px; border-radius: 4px; flex-shrink: 0;
     }
     .drop-close-btn:hover { color: #555; background: #f0f0ea; }
 
@@ -859,6 +869,53 @@
     .fav-star svg { display: block; }
     .fav-star:hover { background: var(--grey-lt); color: var(--primary); }
     .fav-star.on { color: var(--primary); }
+
+    /* ── REFS PANEL ── */
+    .refs-panel {
+      position: fixed; right: 16px; top: 50%; transform: translateY(-50%);
+      background: rgba(255,255,255,0.97); border: 1px solid #e0e0d8;
+      border-radius: 14px; padding: 10px 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+      z-index: 200; max-height: 60vh; overflow-y: auto;
+      backdrop-filter: blur(8px);
+      animation: refsPanelIn 0.18s ease;
+      scrollbar-width: none;
+    }
+    .refs-panel::-webkit-scrollbar { display: none; }
+    @keyframes refsPanelIn {
+      from { opacity: 0; transform: translateY(-50%) translateX(6px); }
+      to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+    }
+    .refs-panel-label {
+      font-size: 8px; font-weight: 800; letter-spacing: 0.1em;
+      color: #c0c0b8; text-transform: uppercase; text-align: center;
+      padding-bottom: 4px; border-bottom: 1px solid #ebebе4;
+      margin-bottom: 2px;
+    }
+    .refs-chips {
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .ref-chip {
+      display: flex; align-items: center; gap: 2px;
+      background: #f5f5f0; border: 1px solid #e4e4dc;
+      border-radius: 8px; padding: 3px 4px 3px 8px;
+      font-size: 11px; font-family: ui-monospace, 'Cascadia Code', 'SFMono-Regular', monospace; font-weight: 600;
+      color: #333; white-space: nowrap;
+    }
+    .ref-copy-btn, .ref-star-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 2px 3px; color: #c0c0b8; line-height: 1;
+      display: flex; align-items: center; border-radius: 4px;
+      transition: color 0.12s, background 0.12s;
+    }
+    .ref-copy-btn:hover { color: var(--primary); background: rgba(232,82,42,0.08); }
+    .ref-star-btn:hover { color: var(--primary); background: rgba(232,82,42,0.08); }
+    .ref-star-btn.on { color: var(--primary); }
+    .refs-panel[hidden] { display: none; }
+    @media (max-width: 500px) {
+      .refs-panel { right: 8px; max-height: 50vh; }
+    }
 
     /* ── SEARCH OVERLAY ── */
     /* always-visible search bar in the header */
@@ -967,14 +1024,28 @@
   </style>
   <script>
     !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]);t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+" (stub)"},o="init push capture getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures onFeatureFlags posthogPersistence".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-    posthog.init('phc_pCw8ahDDsmt7NPPGRvMj5ZewRNfF8p3zoa77BF9WdpER', {
-      api_host: 'https://eu.i.posthog.com',
-      person_profiles: 'identified_only',
-      persistence: 'memory',
-      autocapture: false,
-      disable_session_recording: true,
-      capture_pageview: true,
-    });
+    // Usuaris interns (Sergi, Xavi, equip…): obrir el visor una vegada amb
+    // ?internal=1 a cada dispositiu/navegador per deixar de comptar a PostHog.
+    // ?internal=0 ho torna a activar. La marca es guarda en localStorage propi
+    // (independent de la persistència 'memory' de PostHog, que no sobreviu a un refresc).
+    var __phInternal = false;
+    try {
+      var __phParam = new URLSearchParams(location.search).get('internal');
+      if (__phParam === '1') localStorage.setItem('eurast_internal', '1');
+      else if (__phParam === '0') localStorage.removeItem('eurast_internal');
+      __phInternal = localStorage.getItem('eurast_internal') === '1';
+    } catch (e) { /* localStorage no disponible (incògnit): tracta com a no-intern */ }
+
+    if (!__phInternal) {
+      posthog.init('phc_pCw8ahDDsmt7NPPGRvMj5ZewRNfF8p3zoa77BF9WdpER', {
+        api_host: 'https://eu.i.posthog.com',
+        person_profiles: 'identified_only',
+        persistence: 'memory',
+        autocapture: false,
+        disable_session_recording: true,
+        capture_pageview: true,
+      });
+    }
   </script>
 </head>
 <body>
@@ -1124,26 +1195,21 @@
         <button id="btnNext">›</button>
       </div>
       <div class="group-nav-wrap">
-        <button class="group-pill" id="groupPill">
-          <span id="pillGroupId">G01</span><span class="pill-sep">·</span><span id="pillGroupName"></span><span class="pill-sep">·</span><span id="pillSubPage">1</span><span class="pill-sep">/</span><span id="pillSubTotal">—</span><span class="pill-chevron">▾</span>
-        </button>
+        <div class="group-pill" id="groupPill">
+          <button class="pill-zone-left" id="pillZoneLeft">
+            <span id="pillGroupId">G01</span><span class="pill-sep">·</span><span id="pillGroupName"></span><span class="pill-chevron">▾</span>
+          </button>
+          <div class="pill-zone-divider"></div>
+          <div class="pill-zone-right" id="pillZoneRight">
+            <input class="pill-pg-input" id="pillSubPage" type="number" min="1" value="1"><span class="pill-sep">/</span><span id="pillSubTotal">—</span>
+          </div>
+        </div>
         <div id="groupDropdown" hidden>
-          <button class="drop-close-btn" id="dropClose">×</button>
-          <div id="dropStep1">
-            <div class="drop-hdr" id="dropHdrText"></div>
-            <div id="dropGroupList"></div>
+          <div class="drop-hdr">
+            <span id="dropHdrText"></span>
+            <button class="drop-close-btn" id="dropClose">×</button>
           </div>
-          <div id="dropStep2" hidden>
-            <div class="drop-step2-inner">
-              <button class="drop-back-btn" id="dropBack">‹ <span id="dropBackName"></span></button>
-              <div class="drop-page-row">
-                <input id="dropPageNum" class="drop-page-num" type="number" min="1" value="1">
-                <span class="drop-page-of">/</span>
-                <span id="dropPageTotalLbl" class="drop-page-total">—</span>
-              </div>
-              <button class="drop-go-btn" id="dropGoBtn">→</button>
-            </div>
-          </div>
+          <div id="dropGroupList"></div>
         </div>
       </div>
     </div>
@@ -1778,11 +1844,6 @@ GROUPS.forEach((g, idx) => {
   btn.addEventListener('click', () => {
     goTo(g.page);
     posthog.capture('group_navigated', { group_id: g.id, group_name: g[currentLang] });
-    // Reveal the top group-nav dropdown (at this group's page view) so the
-    // user discovers they can also pick a page from the toolbar. Deferred so
-    // the document-level "click outside → close" handler (which fires on this
-    // same click) runs first and doesn't immediately close it again.
-    setTimeout(() => openGroupDropdownAtGroup(idx), 0);
   });
   sidebarGroups.appendChild(btn);
 });
@@ -2065,9 +2126,9 @@ const backdrop  = document.getElementById('sidebarBackdrop');
 function openSidebar()  { sidebar.classList.add('open'); backdrop.classList.add('open'); }
 function closeSidebar() { sidebar.classList.remove('open'); backdrop.classList.remove('open'); }
 
-btnMenu.addEventListener('click', () =>
+btnMenu?.addEventListener('click', () =>
   sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
-backdrop.addEventListener('click', closeSidebar);
+backdrop?.addEventListener('click', closeSidebar);
 
 // Close sidebar when a group is tapped on mobile
 sidebar.addEventListener('click', e => {
@@ -2078,10 +2139,8 @@ sidebar.addEventListener('click', e => {
 // In flip mode the scroll viewer is hidden — rendering it is wasted work,
 // and awaiting it here can stall the rest of the init (nav listeners etc.)
 if (!flipModeActive) {
-  try {
-    await renderSlot(1);
-  } catch(e) { console.warn('renderSlot 1:', e); }
-  renderSlot(2).catch(() => {});
+  renderSlot(currentPage).catch(() => {});
+  renderSlot(currentPage + 1).catch(() => {});
   setTimeout(() => { observerReady = true; }, 300);
 }
 
@@ -2108,6 +2167,7 @@ function updateNav(n) {
   updateActiveGroup(n);
   updateSubPage(n);
   history.replaceState(null, '', '#pag=' + n);
+  updateRefsPanel();
 }
 
 function goTo(n) {
@@ -2409,6 +2469,38 @@ document.addEventListener('dblclick', e => {
   if (e.target.closest && e.target.closest('.textLayer')) extendSelectionToToken();
 });
 
+// ── RTL TEXT SELECTION FIX ─────────────────────────────────────────
+// The browser loses drag-selection when the mouse passes over empty space
+// between absolutely-positioned spans. We track the anchor manually and
+// use setBaseAndExtent on every mousemove to keep the selection accurate.
+(function() {
+  let anchor = null;
+  function caretAt(x, y) {
+    if (document.caretRangeFromPoint) {
+      const r = document.caretRangeFromPoint(x, y);
+      return r ? { node: r.startContainer, off: r.startOffset } : null;
+    }
+    if (document.caretPositionFromPoint) {
+      const p = document.caretPositionFromPoint(x, y);
+      return p ? { node: p.offsetNode, off: p.offset } : null;
+    }
+    return null;
+  }
+  document.addEventListener('mousedown', e => {
+    if (!e.target.closest('.textLayer')) { anchor = null; return; }
+    anchor = caretAt(e.clientX, e.clientY);
+  }, true);
+  document.addEventListener('mousemove', e => {
+    if (!(e.buttons & 1) || !anchor) return;
+    const focus = caretAt(e.clientX, e.clientY);
+    if (!focus) return;
+    try {
+      window.getSelection().setBaseAndExtent(anchor.node, anchor.off, focus.node, focus.off);
+    } catch(_) {}
+  }, true);
+  document.addEventListener('mouseup', () => { anchor = null; }, true);
+})();
+
 // ── SUB-PAGE NAVIGATION ────────────────────────────────────────────
 function getGroupBounds(pageNum) {
   let idx = 0;
@@ -2427,14 +2519,15 @@ function updateSubPage(pageNum) {
   currentGroupEnd   = end;
   document.getElementById('pillGroupId').textContent   = group.id;
   document.getElementById('pillGroupName').textContent = group[currentLang];
-  document.getElementById('pillSubPage').textContent   = Math.max(1, pageNum - start + 1);
-  document.getElementById('pillSubTotal').textContent  = total;
+  const pgInp = document.getElementById('pillSubPage');
+  pgInp.min   = start;
+  pgInp.max   = end;
+  pgInp.value = pageNum;
+  document.getElementById('pillSubTotal').textContent  = end;
 }
 
 // ── GROUP DROPDOWN ────────────────────────────────────────────────
 const DROP_LABEL = { es:'Grupo', en:'Group', fr:'Groupe', de:'Gruppe', it:'Gruppo', pt:'Grupo' };
-const DROP_GO    = { es:'Ir →', en:'Go →', fr:'Aller →', de:'Los →', it:'Vai →', pt:'Ir →' };
-let dropSelectedGroupIdx = 0;
 
 function buildDropGroupList() {
   const list = document.getElementById('dropGroupList');
@@ -2448,49 +2541,14 @@ function buildDropGroupList() {
     btn.innerHTML = `<span class="drop-g-badge${idx !== curIdx ? ' dim' : ''}">${g.id}</span>
       <span class="drop-g-name">${g[currentLang]}</span>
       <span class="drop-g-pages">${pages}</span>`;
-    btn.addEventListener('click', () => openDropStep2(idx));
+    btn.addEventListener('click', () => { goTo(g.page); closeGroupDropdown(); });
     list.appendChild(btn);
   });
-}
-
-function openDropStep2(groupIdx, focusInput = true) {
-  dropSelectedGroupIdx = groupIdx;
-  const g = GROUPS[groupIdx];
-  const endPage = groupIdx + 1 < GROUPS.length ? GROUPS[groupIdx + 1].page - 1 : totalPages;
-  const total = endPage - g.page + 1;
-  document.getElementById('dropStep1').hidden = true;
-  document.getElementById('dropStep2').hidden = false;
-  document.getElementById('dropBackName').textContent    = `${g.id} · ${g[currentLang]}`;
-  document.getElementById('dropPageTotalLbl').textContent = total;
-  document.getElementById('dropGoBtn').textContent       = DROP_GO[currentLang];
-  const inp = document.getElementById('dropPageNum');
-  inp.max = total; inp.value = 1;
-  // Skip auto-focus on mobile so we don't pop the on-screen keyboard
-  if (focusInput) setTimeout(() => { inp.focus(); inp.select(); }, 50);
-}
-
-// Open the toolbar group dropdown directly at a group's page view (step 2).
-// Used by the left index so clicking a group also reveals the top page picker.
-let dropScrollEnableTimer = null;
-let dropCloseOnScroll = false;
-
-function openGroupDropdownAtGroup(groupIdx) {
-  document.getElementById('groupDropdown').hidden = false;
-  openDropStep2(groupIdx, !IS_MOBILE);
-  // Enable scroll-to-close after a short delay so the programmatic goTo() scroll
-  // that just happened doesn't immediately close the dropdown.
-  clearTimeout(dropScrollEnableTimer);
-  dropCloseOnScroll = false;
-  dropScrollEnableTimer = setTimeout(() => { dropCloseOnScroll = true; }, 400);
 }
 
 function openGroupDropdown() {
   const dd = document.getElementById('groupDropdown');
   if (!dd.hidden) { dd.hidden = true; return; }
-  dropCloseOnScroll = false;
-  clearTimeout(dropScrollEnableTimer);
-  document.getElementById('dropStep1').hidden = false;
-  document.getElementById('dropStep2').hidden = true;
   document.getElementById('dropHdrText').textContent = DROP_LABEL[currentLang];
   buildDropGroupList();
   dd.hidden = false;
@@ -2498,32 +2556,26 @@ function openGroupDropdown() {
 
 function closeGroupDropdown() {
   document.getElementById('groupDropdown').hidden = true;
-  dropCloseOnScroll = false;
-  clearTimeout(dropScrollEnableTimer);
 }
 
-function navigateFromDrop() {
-  const g = GROUPS[dropSelectedGroupIdx];
-  const endPage = dropSelectedGroupIdx + 1 < GROUPS.length ? GROUPS[dropSelectedGroupIdx + 1].page - 1 : totalPages;
-  const total = endPage - g.page + 1;
-  const p = Math.min(Math.max(parseInt(document.getElementById('dropPageNum').value) || 1, 1), total);
-  goTo(g.page + p - 1);
-  closeGroupDropdown();
+function navigateFromPill() {
+  const inp = document.getElementById('pillSubPage');
+  const v = Math.max(currentGroupStart, Math.min(currentGroupEnd, parseInt(inp.value) || currentGroupStart));
+  inp.value = v;
+  goTo(v);
+  inp.blur();
 }
 
-document.getElementById('groupPill').addEventListener('click', openGroupDropdown);
+document.getElementById('pillZoneLeft').addEventListener('click', openGroupDropdown);
 document.getElementById('dropClose').addEventListener('click', closeGroupDropdown);
-viewer.addEventListener('scroll', () => {
-  if (dropCloseOnScroll) closeGroupDropdown();
-}, { passive: true });
-document.getElementById('dropBack').addEventListener('click', () => {
-  document.getElementById('dropStep1').hidden = false;
-  document.getElementById('dropStep2').hidden = true;
+document.getElementById('pillSubPage').addEventListener('click', e => e.stopPropagation());
+document.getElementById('pillSubPage').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); navigateFromPill(); }
+  if (e.key === 'Escape') { document.getElementById('pillSubPage').blur(); }
 });
-document.getElementById('dropGoBtn').addEventListener('click', navigateFromDrop);
-document.getElementById('dropPageNum').addEventListener('keydown', e => {
-  if (e.key === 'Enter') navigateFromDrop();
-  if (e.key === 'Escape') closeGroupDropdown();
+document.getElementById('pillZoneRight').addEventListener('click', () => {
+  const inp = document.getElementById('pillSubPage');
+  inp.focus(); inp.select();
 });
 document.addEventListener('click', e => {
   if (!document.getElementById('groupDropdown').hidden &&
@@ -2638,6 +2690,69 @@ function loadFavs() {
 }
 function saveFavs() { try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch(_) {} }
 function isFav(ref) { return favs.some(f => f.ref === ref); }
+
+// ── REFS PANEL ─────────────────────────────────────────────────────────
+const pageRefs = new Map();
+const COPY_SVG = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+const SMALL_STAR = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+
+// Load page→refs mapping from references.json (refs are in images, not PDF text)
+async function loadPageRefs() {
+  try {
+    const data = await fetch('references.json').then(r => r.json());
+    for (const entry of data.pages) {
+      if (!GROUPS[entry.g]) continue;
+      const absPage = entry.p;
+      // Filter out dimension strings like "400X400" — keep only 8-char product codes
+      const refs = entry.c.filter(c => /^[0-9][0-9A-Z]{6,7}$/.test(c) && !/\dX\d/.test(c));
+      if (refs.length > 0) pageRefs.set(absPage, refs);
+    }
+    updateRefsPanel();
+  } catch(_) {}
+}
+loadPageRefs();
+
+function renderRefsPanel(refs) {
+  const panel = document.getElementById('refsPanel');
+  const chips = document.getElementById('refsChips');
+  if (!panel || !chips) return;
+  if (!refs || refs.length === 0) { panel.hidden = true; return; }
+  chips.innerHTML = '';
+  const gIdx = getGroupIdxForPage(currentPage);
+  refs.forEach(ref => {
+    const chip = document.createElement('div');
+    chip.className = 'ref-chip';
+    const starred = isFav(ref);
+    chip.innerHTML = `<span>${escapeHtml(ref)}</span>
+      <button class="ref-copy-btn" title="Copiar">${COPY_SVG}</button>
+      <button class="ref-star-btn${starred ? ' on' : ''}" title="Guardar">${SMALL_STAR}</button>`;
+    const copyBtn = chip.querySelector('.ref-copy-btn');
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(ref).catch(() => {});
+      posthog.capture('ref_copied', { ref, page: currentPage });
+      copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      setTimeout(() => { copyBtn.innerHTML = COPY_SVG; }, 1400);
+    });
+    const starBtn = chip.querySelector('.ref-star-btn');
+    starBtn.addEventListener('click', () => {
+      const group = GROUPS[gIdx];
+      toggleFav({ ref, family: group ? group[currentLang] : '', page: currentPage, gIdx });
+      starBtn.classList.toggle('on', isFav(ref));
+    });
+    chips.appendChild(chip);
+  });
+  panel.hidden = false;
+}
+
+function updateRefsPanel() {
+  const panel = document.getElementById('refsPanel');
+  if (!panel) return;
+  try {
+    const refs = pageRefs.get(currentPage);
+    if (refs !== undefined) renderRefsPanel(refs);
+    else panel.hidden = true;
+  } catch(_) { panel.hidden = true; }
+}
 function toggleFav(r) {
   const action = isFav(r.ref) ? 'remove' : 'add';
   if (isFav(r.ref)) favs = favs.filter(f => f.ref !== r.ref);
@@ -2868,5 +2983,11 @@ document.getElementById('btnFavClose').addEventListener('click', closeFavs);
 // The full-text index (search-text.json) loads lazily on first focus of the
 // search bar — no eager download for users who never search.
 </script>
+
+<div id="refsPanel" class="refs-panel" hidden>
+  <span class="refs-panel-label">REFS</span>
+  <div id="refsChips" class="refs-chips"></div>
+</div>
+
 </body>
 </html>
