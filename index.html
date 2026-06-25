@@ -1044,7 +1044,11 @@
       __phViewer = localStorage.getItem('eurast_viewer');
     } catch (e) {}
 
-    if (!__phInternal) {
+    // Només inicialitzar PostHog al domini real de producció. Així els data: URIs,
+    // fitxers locals, localhost i previews de proves no embruten les estadístiques.
+    var __phRealSite = location.hostname === 'tarifa.eurast.com';
+
+    if (!__phInternal && __phRealSite) {
       posthog.init('phc_pCw8ahDDsmt7NPPGRvMj5ZewRNfF8p3zoa77BF9WdpER', {
         api_host: 'https://eu.i.posthog.com',
         person_profiles: 'identified_only',
