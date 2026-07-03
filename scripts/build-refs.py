@@ -31,6 +31,9 @@ def has_table(t):
 
 # A reference code: 7-8 alphanumeric chars, starts with a digit, >=5 digits.
 CODE_RE = re.compile(r'^[0-9][0-9A-Z]{6,7}$')
+# WxDxH (o WxD en taules d'accessoris/plaques): números de 3-4 xifres, així
+# no confon potències ("2x7,5"), pesos ni preus.
+DIMS_RE = re.compile(r'^(\d{3,4})x(\d{3,4})(x\d{3,4})?$', re.I)
 
 # Order codes by their position in the actual price table, not by PDF reading
 # order — a code's caption near its product photo is often read by fitz
@@ -38,17 +41,29 @@ CODE_RE = re.compile(r'^[0-9][0-9A-Z]{6,7}$')
 # relative to what's visually printed. We locate the table column(s) (tight,
 # evenly-spaced rows at a consistent x — as opposed to the widely-spaced
 # per-photo captions above) and read them top-to-bottom, left-to-right.
+# Returns [(code, dims)] where dims is the WxDxH cell found on the code's
+# table row ('' if none) — powers the dimension search in the viewer.
 def codes(doc, pno):
     d = doc[pno - 1].get_text('dict')
     items = []  # (x, y, code)
+    all_lines = []  # (x, y, text) — for same-row dims lookup
     for b in d['blocks']:
         for ln in b.get('lines', []):
             text = ''.join(sp['text'] for sp in ln['spans'])
-            c = text.strip().replace(' ', '').upper()
+            t = text.strip()
+            if t:
+                all_lines.append((ln['bbox'][0], ln['bbox'][1], t))
+            c = t.replace(' ', '').upper()
             if CODE_RE.match(c) and len(re.findall(r'[0-9]', c)) >= 5:
                 items.append((ln['bbox'][0], ln['bbox'][1], c))
     if not items:
         return []
+
+    def dims_at(x, y):
+        for lx, ly, lt in all_lines:
+            if lx > x + 5 and abs(ly - y) < 4 and DIMS_RE.match(lt.replace(' ', '')):
+                return lt.replace(' ', '').lower()
+        return ''
 
     # Cluster into x-columns (tolerant of the few px of jitter between rows).
     items.sort(key=lambda t: t[0])
@@ -74,14 +89,16 @@ def codes(doc, pno):
     # Row-major order across table column(s) — same-row entries (e.g. two
     # model variants side by side) share a y-band and sort left-to-right.
     table_items.sort(key=lambda t: (round(t[0] / 6), t[1]))
-    out = []
-    for _, _, c in table_items:
-        if c not in out: out.append(c)
+    out, seen = [], set()
+    for y, x, c in table_items:
+        if c not in seen:
+            seen.add(c); out.append((c, dims_at(x, y)))
     # Codes seen only in captions (no matching table row) are appended after,
     # in their natural top-to-bottom order.
     caption_items.sort(key=lambda t: (t[0], t[1]))
-    for _, _, c in caption_items:
-        if c not in out: out.append(c)
+    for y, x, c in caption_items:
+        if c not in seen:
+            seen.add(c); out.append((c, dims_at(x, y)))
     return out
 
 def is_heading(s):
@@ -125,9 +142,10 @@ def main():
         if not has_table(t): continue
         cs = codes(doc, p)
         if not cs: continue
-        pages.append({'p': p, 'g': group_idx(p), 'f': family(doc, p), 'c': cs})
+        pages.append({'p': p, 'g': group_idx(p), 'f': family(doc, p),
+                      'c': [c for c, _ in cs], 'd': [dm for _, dm in cs]})
 
-    json.dump({'v': 5, 'pages': pages}, open(OUT, 'w', encoding='utf-8'),
+    json.dump({'v': 6, 'pages': pages}, open(OUT, 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))
     json.dump({'v': 1, 'pages': text_pages}, open(OUT_TEXT, 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))

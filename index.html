@@ -1035,7 +1035,17 @@
       transition: background .1s; border: none; background: none;
       text-align: left; width: 100%; font-family: inherit;
     }
-    .search-result:hover { background: var(--grey-lt); }
+    .search-result:hover, .search-result.selected { background: var(--grey-lt); }
+    .fav-export {
+      display: flex; gap: 8px; margin-top: 8px; padding-top: 8px;
+      border-top: 1px solid var(--grey-lt);
+    }
+    .fav-export-btn {
+      flex: 1; background: none; border: 1px solid #e0e0d8; border-radius: 8px;
+      padding: 6px 10px; font-size: 11px; font-weight: 600; color: var(--grey-md);
+      cursor: pointer; font-family: inherit; transition: color .12s, border-color .12s;
+    }
+    .fav-export-btn:hover { color: var(--primary); border-color: var(--primary); }
     .search-result-badge {
       flex-shrink: 0; font-size: 9px; font-weight: 800;
       background: var(--grey-lt); color: var(--grey-md);
@@ -1208,6 +1218,12 @@
       </svg>
       <span id="favCount" class="fav-count" hidden>0</span>
     </button>
+    <button class="btn-search" id="btnShare" aria-label="Compartir" title="Copiar enlace a esta página">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+      </svg>
+    </button>
     <a class="btn-dl" id="btn-dl" href="cataleg.pdf" download>↓ <span id="dl-label">Descargar PDF</span></a>
   </div>
 </header>
@@ -1229,6 +1245,10 @@
     </div>
     <div id="favResults" class="search-results"></div>
     <div id="favEmpty" class="search-status"></div>
+    <div class="fav-export" id="favExport" hidden>
+      <button class="fav-export-btn" id="btnFavCopy"></button>
+      <button class="fav-export-btn" id="btnFavCsv"></button>
+    </div>
   </div>
 </div>
 
@@ -1526,7 +1546,12 @@ const GROUPS = [
 ];
 
 // ── LOAD PDF ───────────────────────────────────────────────────────
-const task = pdfjsLib.getDocument({ url: 'cataleg.pdf', rangeChunkSize: 65536 });
+// disableAutoFetch: amb servidor amb suport de Range (GitHub Pages) pdf.js
+// només baixa els chunks de les pàgines que es miren, en lloc dels 53 MB
+// sencers en segon pla — primera pàgina molt més ràpida en mòbil/4G. Si el
+// servidor no suporta Range (http.server local), pdf.js ho detecta i baixa
+// el fitxer sencer com abans.
+const task = pdfjsLib.getDocument({ url: 'cataleg.pdf', rangeChunkSize: 65536, disableAutoFetch: true });
 task.onProgress = ({ loaded, total }) => {
   if (!total) return;
   const pct = Math.round(loaded / total * 100);
@@ -1936,6 +1961,10 @@ function setLang(lang) {
   const sx = STRINGS[lang].search;
   document.getElementById('modalClose').setAttribute('aria-label', sx.ariaClose);
   document.getElementById('searchTextInput').placeholder = sx.placeholder;
+  // try: la crida inicial per ?lang= arriba abans que la const FAV_STRINGS
+  // (declarada més avall) existeixi — el tooltip es queda en castellà fins
+  // al primer canvi manual d'idioma, però no petem per un tooltip.
+  try { document.getElementById('btnShare').title = (FAV_STRINGS[lang] || FAV_STRINGS.es).share; } catch(_) {}
   // View-toggle tooltips (reflect current state)
   const fx = STRINGS[lang].flip;
   document.getElementById('btnFlipMode').title = flipModeActive ? fx.exit : fx.enter;
@@ -2744,12 +2773,12 @@ function setSearchStatus(count) {
 // ── FAVORITES (localStorage, no login) ─────────────────────────────
 const FAV_KEY = 'eurast_favs';
 const FAV_STRINGS = {
-  es: { title: 'Referencias guardadas', empty: 'Aún no tienes referencias guardadas. Busca una referencia y toca la estrella ☆ para guardarla.' },
-  en: { title: 'Saved references',       empty: 'No saved references yet. Search a reference and tap the star ☆ to save it.' },
-  fr: { title: 'Références enregistrées', empty: 'Aucune référence enregistrée. Cherchez une référence et touchez l’étoile ☆ pour l’enregistrer.' },
-  de: { title: 'Gespeicherte Referenzen', empty: 'Noch keine gespeicherten Referenzen. Suchen Sie eine Referenz und tippen Sie auf den Stern ☆.' },
-  it: { title: 'Riferimenti salvati',     empty: 'Nessun riferimento salvato. Cerca un riferimento e tocca la stella ☆ per salvarlo.' },
-  pt: { title: 'Referências guardadas',   empty: 'Ainda não tens referências guardadas. Procura uma referência e toca na estrela ☆ para guardar.' },
+  es: { title: 'Referencias guardadas', empty: 'Aún no tienes referencias guardadas. Busca una referencia y toca la estrella ☆ para guardarla.', copy: 'Copiar lista', csv: 'Descargar CSV', copied: '¡Copiada!', share: 'Copiar enlace a esta página', shareCopied: '¡Enlace copiado!' },
+  en: { title: 'Saved references',       empty: 'No saved references yet. Search a reference and tap the star ☆ to save it.', copy: 'Copy list', csv: 'Download CSV', copied: 'Copied!', share: 'Copy link to this page', shareCopied: 'Link copied!' },
+  fr: { title: 'Références enregistrées', empty: 'Aucune référence enregistrée. Cherchez une référence et touchez l’étoile ☆ pour l’enregistrer.', copy: 'Copier la liste', csv: 'Télécharger CSV', copied: 'Copiée !', share: 'Copier le lien de cette page', shareCopied: 'Lien copié !' },
+  de: { title: 'Gespeicherte Referenzen', empty: 'Noch keine gespeicherten Referenzen. Suchen Sie eine Referenz und tippen Sie auf den Stern ☆.', copy: 'Liste kopieren', csv: 'CSV herunterladen', copied: 'Kopiert!', share: 'Link zu dieser Seite kopieren', shareCopied: 'Link kopiert!' },
+  it: { title: 'Riferimenti salvati',     empty: 'Nessun riferimento salvato. Cerca un riferimento e tocca la stella ☆ per salvarlo.', copy: 'Copia lista', csv: 'Scarica CSV', copied: 'Copiata!', share: 'Copia link a questa pagina', shareCopied: 'Link copiato!' },
+  pt: { title: 'Referências guardadas',   empty: 'Ainda não tens referências guardadas. Procura uma referência e toca na estrela ☆ para guardar.', copy: 'Copiar lista', csv: 'Transferir CSV', copied: 'Copiada!', share: 'Copiar link desta página', shareCopied: 'Link copiado!' },
 };
 const STAR_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
 let favs = loadFavs();
@@ -2767,6 +2796,7 @@ const COPY_SVG = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" st
 const SMALL_STAR = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
 
 // Load page→refs mapping from references.json (refs are in images, not PDF text)
+const codePage = new Map();   // code → absolute page (per a #ref= deep links)
 async function loadPageRefs() {
   try {
     const data = await fetch('references.json').then(r => r.json());
@@ -2776,8 +2806,18 @@ async function loadPageRefs() {
       // Filter out dimension strings like "400X400" — keep only 8-char product codes
       const refs = entry.c.filter(c => /^[0-9][0-9A-Z]{6,7}$/.test(c) && !/\dX\d/.test(c));
       if (refs.length > 0) pageRefs.set(absPage, refs);
+      refs.forEach(c => { if (!codePage.has(c)) codePage.set(c, absPage); });
     }
     updateRefsPanel();
+    // Deep link #ref=CODE (per compartir una referència concreta): salta a
+    // la seva pàgina i la ressalta. Es resol aquí perquè necessita el mapa,
+    // i sobre initialHash perquè updateNav ja ha reescrit location.hash.
+    const m = initialHash.match(/^#ref=([0-9A-Za-z]{7,8})$/);
+    if (m) {
+      const code = m[1].toUpperCase();
+      const pg = codePage.get(code);
+      if (pg) { goTo(pg); highlightRef(pg, code); }
+    }
   } catch(_) {}
 }
 loadPageRefs();
@@ -2920,7 +2960,11 @@ function makeRefRow(r, onStarToggle) {
   const s = STRINGS[currentLang].search;
   const btn = document.createElement('button');
   btn.className = 'search-result';
-  const famHtml = r.family ? `${escapeHtml(r.family)} · ${s.pageAbbr} ${r.page}` : `${s.pageAbbr} ${r.page}`;
+  const parts = [];
+  if (r.family) parts.push(escapeHtml(r.family));
+  if (r.dims)   parts.push(escapeHtml(r.dims));
+  parts.push(`${s.pageAbbr} ${r.page}`);
+  const famHtml = parts.join(' · ');
   btn.innerHTML = `<span class="search-result-badge">${g.id}</span>
     <span class="search-result-page">${escapeHtml(r.ref)}</span>
     <span class="search-result-snippet">${famHtml}</span>
@@ -2950,6 +2994,10 @@ function openFavs() {
     empty.hidden = true;
     favs.forEach(r => list.appendChild(makeRefRow(r, () => { if (!isFav(r.ref)) openFavs(); })));
   }
+  const exp = document.getElementById('favExport');
+  exp.hidden = !favs.length;
+  document.getElementById('btnFavCopy').textContent = fx.copy;
+  document.getElementById('btnFavCsv').textContent  = fx.csv;
   document.getElementById('favOverlay').hidden = false;
   document.getElementById('btnFav').classList.add('active');
 }
@@ -2957,6 +3005,68 @@ function closeFavs() {
   document.getElementById('favOverlay').hidden = true;
   document.getElementById('btnFav').classList.remove('active');
 }
+
+// Exportar favorits — converteix la llista guardada en material de
+// pressupost: copiar com a text (ref + família + pàgina) o baixar CSV.
+function favLine(f) {
+  const gid = GROUPS[f.gIdx]?.id || '';
+  return [f.ref, f.family || '', gid, f.page];
+}
+document.getElementById('btnFavCopy').addEventListener('click', () => {
+  const fx = FAV_STRINGS[currentLang] || FAV_STRINGS.es;
+  const s  = STRINGS[currentLang].search;
+  const text = favs.map(f => favLine(f).slice(0, 3).join('\t') + `\t${s.pageAbbr} ${f.page}`).join('\n');
+  navigator.clipboard.writeText(text).catch(() => {});
+  phCapture('favorites_exported', { format: 'copy', count: favs.length });
+  const btn = document.getElementById('btnFavCopy');
+  btn.textContent = fx.copied;
+  setTimeout(() => { btn.textContent = fx.copy; }, 1400);
+});
+document.getElementById('btnFavCsv').addEventListener('click', () => {
+  const rows = [['referencia', 'familia', 'grupo', 'pagina'], ...favs.map(favLine)];
+  const csv  = '﻿' + rows.map(r => r.join(';')).join('\r\n');  // BOM per a Excel
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  a.download = 'referencias-eurast.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  phCapture('favorites_exported', { format: 'csv', count: favs.length });
+});
+
+// Compartir: copia l'enllaç directe a la pàgina actual (#pag=N)
+document.getElementById('btnShare').addEventListener('click', () => {
+  const url = `${location.origin}${location.pathname}#pag=${currentPage}`;
+  navigator.clipboard.writeText(url).catch(() => {});
+  phCapture('page_link_copied', { page: currentPage });
+  const btn = document.getElementById('btnShare');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  setTimeout(() => { btn.innerHTML = orig; }, 1400);
+});
+
+// Sinònims de cerca (claus i valors ja passats per deburr). Mapa nascut de
+// les cerques reals sense resultats a PostHog (p.ex. "freidora doble" 24
+// cops → les famílies diuen "DOS CUBAS"; "fritteuse" en alemany) + els
+// termes bàsics dels 6 idiomes del visor. Cada token de la consulta ha de
+// casar amb la família directament o via un d'aquests equivalents.
+const SEARCH_SYN = {
+  'doble': ['dos'], 'dobles': ['dos'], 'double': ['dos'], 'doppel': ['dos'], 'doppia': ['dos'],
+  'fritteuse': ['freidora'], 'fryer': ['freidora'], 'friteuse': ['freidora'], 'friggitrice': ['freidora'], 'fritadeira': ['freidora'],
+  'oven': ['horno'], 'four': ['horno'], 'ofen': ['horno'], 'backofen': ['horno'], 'forno': ['horno'],
+  'nevera': ['frigorific'], 'frigo': ['frigorific'], 'fridge': ['frigorific'], 'refrigerateur': ['frigorific'], 'kuhlschrank': ['frigorific'], 'frigorifero': ['frigorific'],
+  'freezer': ['congelad'], 'congelateur': ['congelad'], 'gefrierschrank': ['congelad'],
+  'dishwasher': ['lavavajillas', 'lavavasos'], 'lavastoviglie': ['lavavajillas'], 'spulmaschine': ['lavavajillas'],
+  'griddle': ['plancha', 'frytop'], 'plaque': ['plancha'],
+  'hood': ['campana'], 'hotte': ['campana'], 'haube': ['campana'], 'cappa': ['campana'],
+  'sink': ['fregadero'], 'evier': ['fregadero'], 'spule': ['fregadero'],
+  'cooker': ['cocina'], 'stove': ['cocina'], 'herd': ['cocina'], 'cuisiniere': ['cocina'], 'cucina': ['cocina'],
+  'support': ['soporte'], 'unterbau': ['soporte'], 'supporto': ['soporte'],
+  'showcase': ['vitrina'], 'vitrine': ['vitrina'],
+  'table': ['mesa'], 'tisch': ['mesa'], 'tavolo': ['mesa'],
+  'grill': ['barbacoa', 'grill'], 'bbq': ['barbacoa'],
+};
+// Token de dimensions: "400x700" o "400x700x280"
+const DIM_TOKEN_RE = /^\d{2,4}x\d{2,4}(x\d{2,4})?$/;
 
 function doSearch(query) {
   const statusEl  = document.getElementById('searchStatus');
@@ -2966,27 +3076,51 @@ function doSearch(query) {
   const qNorm  = q.replace(/\s+/g, '');
   if (!qNorm || qNorm.length < 2) { resultsEl.innerHTML = ''; renderSearchStatus(query); return; }
 
-  // ── Reference-centric results: match by code OR by family name ──
+  // ── Reference-centric results: match by code, family name or dimensions ──
   const qd  = deburr(q);
   const qUp = deburr(qNorm).toUpperCase();
-  const byRef = new Map(); // ref → { ref, family, page, gIdx, score }
+  // Matching per tokens: TOTES les paraules han d'aparèixer a la família
+  // (en qualsevol ordre i posició), no la frase literal sencera — així
+  // "cocinas gas" casa amb "COCINAS ... A GAS". Les dimensions es tracten
+  // com a token propi i es comparen amb la mida WxDxH de cada referència.
+  const rawTokens  = qd.split(/\s+/).filter(t => t.length >= 2);
+  const dimTokens  = rawTokens.filter(t => DIM_TOKEN_RE.test(t));
+  const textTokens = rawTokens.filter(t => !DIM_TOKEN_RE.test(t));
+  const famMatches = f => textTokens.length > 0 && textTokens.every(t =>
+    f.includes(t) || (SEARCH_SYN[t] || []).some(alt => f.includes(alt)));
+  const dimsMatch = dm => !!dm && dimTokens.every(t => dm === t || dm.startsWith(t + 'x'));
+
+  const byRef = new Map();      // ref → { ref, family, dims, page, gIdx, score }
+  const byRefDims = new Map();  // fallback: dims casen però la família no
   for (const e of refPages) {
     if (!e.c || !e.c.length) continue;
-    const famMatch = qd.length >= 2 && deburr(e.f || '').includes(qd);
-    for (const code of e.c) {
-      let score = null;
+    const famMatch = famMatches(deburr(e.f || ''));
+    for (let i = 0; i < e.c.length; i++) {
+      const code = e.c[i];
+      if (/^\d{3,4}X\d{3,4}$/.test(code)) continue;  // artefacte de mides, no és una ref
+      const dm = (e.d && e.d[i]) || '';
+      let score = null, target = byRef;
       const ci = code.indexOf(qUp);
-      if (qUp.length >= 2 && ci !== -1) {
+      if (!dimTokens.length && qUp.length >= 2 && ci !== -1) {
         score = code === qUp ? 0 : (ci === 0 ? 1 : 2);
-      } else if (famMatch) {
+      } else if (dimTokens.length && dimsMatch(dm)) {
+        if (textTokens.length === 0 || famMatch) score = 3;
+        else { score = 5; target = byRefDims; }  // reserva per si l'estricta no dona res
+      } else if (!dimTokens.length && famMatch) {
         score = 4;
       }
       if (score === null) continue;
-      const prev = byRef.get(code);
+      const prev = target.get(code);
       if (!prev || score < prev.score) {
-        byRef.set(code, { ref: code, family: e.f || '', page: e.p, gIdx: e.g, score });
+        target.set(code, { ref: code, family: e.f || '', dims: dm, page: e.p, gIdx: e.g, score });
       }
     }
+  }
+  // "cocinas gas 1050x580x280": si cap família casa amb el text PERÒ les
+  // mides sí que existeixen, val més ensenyar els productes d'aquella mida
+  // que un "sense resultats" (la mida és la part més específica de la consulta).
+  if (byRef.size === 0 && byRefDims.size > 0) {
+    byRefDims.forEach((v, k) => byRef.set(k, v));
   }
 
   const refs = [...byRef.values()].sort((a, b) => a.score - b.score || a.page - b.page);
@@ -3098,20 +3232,33 @@ searchInput.addEventListener('focus', () => {
   if (!isIndexing && indexedCount === 0) buildSearchIndex(); // lazy-load text index
   if (searchInput.value.trim().length >= 2) { showResults(); doSearch(searchInput.value); }
 });
+// Selecció amb ↑↓ dins dels resultats; -1 = cap (Enter agafa el primer)
+let searchSel = -1;
+function moveSearchSel(delta) {
+  const rows = [...document.querySelectorAll('#searchResults .search-result')];
+  if (!rows.length) return;
+  searchSel = Math.max(0, Math.min(rows.length - 1, searchSel + delta));
+  rows.forEach((r, i) => r.classList.toggle('selected', i === searchSel));
+  rows[searchSel].scrollIntoView({ block: 'nearest' });
+}
 searchInput.addEventListener('input', () => {
   document.getElementById('btnSearchClear').hidden = !searchInput.value;
+  searchSel = -1;
   clearTimeout(searchTimer);
   searchTimer = setTimeout(runSearch, 200);
 });
 searchInput.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeSearch(); searchInput.blur(); }
+  if (e.key === 'ArrowDown') { e.preventDefault(); moveSearchSel(1); }
+  if (e.key === 'ArrowUp')   { e.preventDefault(); moveSearchSel(-1); }
   if (e.key === 'Enter') {
-    // Enter = anar directament al primer resultat (runSearch és síncron un
-    // cop l'índex està carregat, així que la llista ja està renderitzada).
+    // Enter = anar al resultat seleccionat amb ↑↓, o al primer si no n'hi
+    // ha cap (runSearch és síncron un cop l'índex està carregat).
     clearTimeout(searchTimer);
-    runSearch();
-    const first = document.querySelector('#searchResults .search-result');
-    if (first) { first.click(); searchInput.blur(); }
+    if (searchSel < 0) runSearch();
+    const rows = document.querySelectorAll('#searchResults .search-result');
+    const target = rows[searchSel >= 0 && searchSel < rows.length ? searchSel : 0];
+    if (target) { target.click(); searchInput.blur(); searchSel = -1; }
   }
 });
 // Hide results when focus leaves the bar/results (delay so result clicks land)
