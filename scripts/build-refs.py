@@ -31,13 +31,58 @@ def has_table(t):
 
 # A reference code: 7-8 alphanumeric chars, starts with a digit, >=5 digits.
 CODE_RE = re.compile(r'^[0-9][0-9A-Z]{6,7}$')
-def codes(t):
+
+# Order codes by their position in the actual price table, not by PDF reading
+# order — a code's caption near its product photo is often read by fitz
+# BEFORE the table row that repeats it, which scrambled the widget/table order
+# relative to what's visually printed. We locate the table column(s) (tight,
+# evenly-spaced rows at a consistent x — as opposed to the widely-spaced
+# per-photo captions above) and read them top-to-bottom, left-to-right.
+def codes(doc, pno):
+    d = doc[pno - 1].get_text('dict')
+    items = []  # (x, y, code)
+    for b in d['blocks']:
+        for ln in b.get('lines', []):
+            text = ''.join(sp['text'] for sp in ln['spans'])
+            c = text.strip().replace(' ', '').upper()
+            if CODE_RE.match(c) and len(re.findall(r'[0-9]', c)) >= 5:
+                items.append((ln['bbox'][0], ln['bbox'][1], c))
+    if not items:
+        return []
+
+    # Cluster into x-columns (tolerant of the few px of jitter between rows).
+    items.sort(key=lambda t: t[0])
+    cols = []
+    for x, y, c in items:
+        if cols and x - cols[-1]['x'] <= 4:
+            cols[-1]['items'].append((y, c))
+            cols[-1]['x'] = x
+        else:
+            cols.append({'x': x, 'items': [(y, c)]})
+
+    # A genuine table column has >=2 rows with tight (line-height) y-gaps;
+    # photo captions stacked in the same visual column are spaced much wider
+    # (image height apart).
+    table_items, caption_items = [], []
+    for col in cols:
+        rows = sorted(col['items'], key=lambda t: t[0])
+        gaps = [rows[i + 1][0] - rows[i][0] for i in range(len(rows) - 1)]
+        is_table = len(rows) >= 2 and gaps and max(gaps) <= 30
+        for y, c in rows:
+            (table_items if is_table else caption_items).append((y, col['x'], c))
+
+    # Row-major order across table column(s) — same-row entries (e.g. two
+    # model variants side by side) share a y-band and sort left-to-right.
+    table_items.sort(key=lambda t: (round(t[0] / 6), t[1]))
     out = []
-    for line in t.split('\n'):
-        c = line.strip().replace(' ', '').upper()
-        if CODE_RE.match(c) and len(re.findall(r'[0-9]', c)) >= 5:
-            out.append(c)
-    return list(dict.fromkeys(out))
+    for _, _, c in table_items:
+        if c not in out: out.append(c)
+    # Codes seen only in captions (no matching table row) are appended after,
+    # in their natural top-to-bottom order.
+    caption_items.sort(key=lambda t: (t[0], t[1]))
+    for _, _, c in caption_items:
+        if c not in out: out.append(c)
+    return out
 
 def is_heading(s):
     s = s.strip()
@@ -78,7 +123,7 @@ def main():
         t = doc[p - 1].get_text('text')
         text_pages.append({'p': p, 'g': group_idx(p), 't': t})
         if not has_table(t): continue
-        cs = codes(t)
+        cs = codes(doc, p)
         if not cs: continue
         pages.append({'p': p, 'g': group_idx(p), 'f': family(doc, p), 'c': cs})
 

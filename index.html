@@ -1264,6 +1264,17 @@ window.addEventListener('unhandledrejection', e => showErrorOverlay(e.reason));
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
 
+// posthog.init() only runs on the production domain (see the head script),
+// so posthog.capture is never defined elsewhere (localhost, previews,
+// ?internal=1). Calling it directly threw and aborted whatever handler
+// called it mid-way — e.g. search results were computed and counted but
+// never appended to the DOM because the capture call above that code threw
+// first. Route every capture through this so analytics failures can't break
+// the feature they're instrumenting.
+function phCapture(event, props) {
+  try { posthog.capture(event, props); } catch(_) {}
+}
+
 // ── STATE ──────────────────────────────────────────────────────────
 // IS_MOBILE is evaluated lazily after the layout wait so that innerWidth
 // reflects the real rendered viewport (not the initial 0 before layout).
@@ -1655,19 +1666,28 @@ let observerReady = false;
 
 const pageObs = new IntersectionObserver(entries => {
   if (!observerReady) return;
+  // Multiple slots can cross the 0.3 threshold in the same batch while
+  // scrolling (the incoming page becomes visible before the outgoing one
+  // leaves). Picking the MOST visible one — not just the last entry in the
+  // batch — keeps currentPage (and the refs panel it drives) from jumping to
+  // a neighboring page.
+  let best = null;
   entries.forEach(e => {
     if (!e.isIntersecting) return;
     const n = parseInt(e.target.dataset.page);
-    currentPage = n;
-    updateNav(n);
+    if (!best || e.intersectionRatio > best.ratio) best = { n, ratio: e.intersectionRatio };
     for (let i = Math.max(1, n - PRERENDER); i <= Math.min(totalPages, n + PRERENDER); i++) {
       renderSlot(i);
     }
-    // Use DOM as source of truth — rendered Set may lag behind actual state
-    viewer.querySelectorAll('.page-slot canvas').forEach(cvs => {
-      const r = parseInt(cvs.closest('.page-slot')?.dataset.page);
-      if (r && Math.abs(r - n) > UNLOAD_FAR) unloadSlot(r);
-    });
+  });
+  if (best) {
+    currentPage = best.n;
+    updateNav(best.n);
+  }
+  // Use DOM as source of truth — rendered Set may lag behind actual state
+  viewer.querySelectorAll('.page-slot canvas').forEach(cvs => {
+    const r = parseInt(cvs.closest('.page-slot')?.dataset.page);
+    if (r && Math.abs(r - currentPage) > UNLOAD_FAR) unloadSlot(r);
   });
 }, { root: viewer, threshold: 0.3 });
 
@@ -1848,7 +1868,7 @@ if (!IS_MOBILE && typeof St !== 'undefined') {
   document.getElementById('btnFlipMode').addEventListener('click', () => {
     const newMode = flipModeActive ? 'scroll' : 'flip';
     if (flipModeActive) activateScrollMode(); else activateFlipMode();
-    posthog.capture('view_mode_changed', { mode: newMode });
+    phCapture('view_mode_changed', { mode: newMode });
   });
 }
 
@@ -1860,7 +1880,7 @@ GROUPS.forEach((g, idx) => {
   btn.innerHTML = `<span class="nav-badge">${g.id}</span><span class="nav-name">${g[currentLang]}</span>`;
   btn.addEventListener('click', () => {
     goTo(g.page);
-    posthog.capture('group_navigated', { group_id: g.id, group_name: g[currentLang] });
+    phCapture('group_navigated', { group_id: g.id, group_name: g[currentLang] });
   });
   sidebarGroups.appendChild(btn);
 });
@@ -2048,7 +2068,7 @@ function triggerDownload() {
 function openModal() {
   updateModal(currentLang);
   document.getElementById('leadModal').hidden = false;
-  posthog.capture('download_form_opened', { lang: currentLang });
+  phCapture('download_form_opened', { lang: currentLang });
   setTimeout(() => document.getElementById('leadEmail').focus(), 80);
 }
 
@@ -2071,7 +2091,7 @@ async function submitLead(email, company, countryCode, countryName) {
   // Persist a non-PII flag so returning visitors skip the modal
   // (no guardem l'email en clar a localStorage)
   localStorage.setItem(LEAD_LS_KEY, '1');
-  posthog.capture('download_submitted', { country: countryCode, lang: currentLang });
+  phCapture('download_submitted', { country: countryCode, lang: currentLang });
 
   const sendPromise = fetch(LEAD_WEBHOOK, {
     method:  'POST',
@@ -2297,7 +2317,7 @@ function updatePagesIcon() {
 }
 document.getElementById('btnPages').addEventListener('click', () => {
   twoPage = !twoPage;
-  posthog.capture('view_mode_changed', { mode: twoPage ? '2pages' : '1page' });
+  phCapture('view_mode_changed', { mode: twoPage ? '2pages' : '1page' });
   updatePagesIcon();
   if (flipModeActive) {
     if (flipSetPages) flipSetPages();
@@ -2747,7 +2767,7 @@ function renderRefsPanel(refs) {
     const copyBtn = chip.querySelector('.ref-copy-btn');
     copyBtn.addEventListener('click', () => {
       navigator.clipboard.writeText(ref).catch(() => {});
-      posthog.capture('ref_copied', { ref, page: currentPage });
+      phCapture('ref_copied', { ref, page: currentPage });
       copyBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
       setTimeout(() => { copyBtn.innerHTML = COPY_SVG; }, 1400);
     });
@@ -2775,7 +2795,7 @@ function toggleFav(r) {
   const action = isFav(r.ref) ? 'remove' : 'add';
   if (isFav(r.ref)) favs = favs.filter(f => f.ref !== r.ref);
   else favs.unshift({ ref: r.ref, family: r.family || '', page: r.page, gIdx: r.gIdx });
-  posthog.capture('favorite_toggled', { action, ref: r.ref, group_id: GROUPS[r.gIdx]?.id });
+  phCapture('favorite_toggled', { action, ref: r.ref, group_id: GROUPS[r.gIdx]?.id });
   saveFavs();
   updateFavBtn();
 }
@@ -2800,7 +2820,7 @@ function makeRefRow(r, onStarToggle) {
     <span class="search-result-page">${escapeHtml(r.ref)}</span>
     <span class="search-result-snippet">${famHtml}</span>
     <span class="fav-star${isFav(r.ref) ? ' on' : ''}" role="button" aria-label="Favorito">${STAR_SVG}</span>`;
-  btn.addEventListener('click', () => { posthog.capture('reference_clicked', { ref: r.ref, page: r.page, group_id: g.id }); goTo(r.page); closeSearch(); closeFavs(); highlightRef(r.page, r.ref); });
+  btn.addEventListener('click', () => { phCapture('reference_clicked', { ref: r.ref, page: r.page, group_id: g.id }); goTo(r.page); closeSearch(); closeFavs(); highlightRef(r.page, r.ref); });
   const star = btn.querySelector('.fav-star');
   star.addEventListener('click', e => {
     e.stopPropagation();
@@ -2868,7 +2888,7 @@ function doSearch(query) {
 
   if (refs.length) {
     setSearchStatus(refs.length);
-    posthog.capture('search_performed', { query, result_count: refs.length, search_type: 'reference' });
+    phCapture('search_performed', { query, result_count: refs.length, search_type: 'reference' });
     resultsEl.innerHTML = '';
     refs.slice(0, 60).forEach(r => resultsEl.appendChild(makeRefRow(r)));
     return;
@@ -2908,7 +2928,7 @@ function fullTextSearch(q, qNorm) {
   }
   hits.sort((a, b) => a.page - b.page);
   setSearchStatus(hits.length);
-  posthog.capture('search_performed', { query: q, result_count: hits.length, search_type: 'fulltext' });
+  phCapture('search_performed', { query: q, result_count: hits.length, search_type: 'fulltext' });
 
   const s = STRINGS[currentLang].search;
   resultsEl.innerHTML = '';
@@ -2921,7 +2941,7 @@ function fullTextSearch(q, qNorm) {
     btn.innerHTML = `<span class="search-result-badge">${g.id}</span>
       <span class="search-result-page">${s.pageAbbr} ${h.page}</span>
       <span class="search-result-snippet">${snip}</span>`;
-    btn.addEventListener('click', () => { posthog.capture('search_result_clicked', { page: h.page, group_id: g.id, search_type: 'fulltext' }); goTo(h.page); closeSearch(); });
+    btn.addEventListener('click', () => { phCapture('search_result_clicked', { page: h.page, group_id: g.id, search_type: 'fulltext' }); goTo(h.page); closeSearch(); });
     resultsEl.appendChild(btn);
   });
 }
