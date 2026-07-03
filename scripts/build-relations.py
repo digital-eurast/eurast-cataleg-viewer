@@ -26,7 +26,13 @@ PDF  = os.path.join(HERE, 'cataleg.pdf')
 REFS = os.path.join(HERE, 'references.json')
 OUT  = os.path.join(HERE, 'relations.json')
 
-GROUPS_IN_SCOPE = (3, 4)   # G04, G05 (0-indexed) — proof of concept inicial
+GROUPS_IN_SCOPE = (2, 3, 4)   # G03, G04, G05 (0-indexed)
+
+# Famílies excloses de les relacions: productes d'un ALTRE proveïdor (Casta)
+# dins d'un grup que és majoritàriament Tecnoinox — els suports solts del grup
+# NO hi encaixen i no es poden muntar/desmuntar (confirmat per Sergi, 2026-07).
+# Si es detecten més casos (p.ex. algunes planxes), afegir el prefix aquí.
+EXCLUDE_FAMILY_PREFIXES = ('WOK',)
 
 CODE_RE = re.compile(r'^[0-9][0-9A-Z]{6,7}$')
 DIMS_RE = re.compile(r'^(\d{3,4})x(\d{3,4})x(\d{3,4})$')
@@ -82,6 +88,7 @@ def main():
     items = {}
     for pg in refs:
         if pg['g'] not in GROUPS_IN_SCOPE: continue
+        if pg['f'].startswith(EXCLUDE_FAMILY_PREFIXES): continue
         for code, cells in rows_for_page(doc, pg['p']):
             dims = di = None
             for i, c in enumerate(cells):
@@ -136,7 +143,7 @@ def main():
             e['v'] = support_variant(it['attrs'])
         out_items[c] = e
 
-    json.dump({'v': 1, 'groups': [g + 1 for g in GROUPS_IN_SCOPE],
+    json.dump({'v': 2, 'groups': [g + 1 for g in GROUPS_IN_SCOPE],
                'items': out_items},
               open(OUT, 'w', encoding='utf-8'),
               ensure_ascii=False, separators=(',', ':'))

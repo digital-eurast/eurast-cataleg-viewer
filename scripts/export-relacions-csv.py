@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
 """Export relations to CSV: sobretaula+suport=kit pricing analysis for the team.
 
-Generates relacions-g4-g5.csv from relations.json and references.json.
-Run after build-relations.py when cataleg.pdf has been updated.
+Generates relacions-sobretaula-suport-kit.csv from relations.json and
+references.json. Run after build-relations.py when cataleg.pdf has been updated.
 """
 import json, csv, os
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REL  = os.path.join(HERE, 'relations.json')
 REFS = os.path.join(HERE, 'references.json')
-OUT  = os.path.join(HERE, 'relacions-g4-g5.csv')
+OUT  = os.path.join(HERE, 'relacions-sobretaula-suport-kit.csv')
+
+# Primer full PDF de cada grup (ha de coincidir amb build-refs.py)
+GROUP_STARTS = [2, 47, 65, 93, 151, 207, 248, 286, 342, 391, 425, 498, 590, 662, 733, 817]
+def group_of(page):
+    g = 0
+    for i, s in enumerate(GROUP_STARTS):
+        if page >= s: g = i
+    return f'G{g + 1:02d}'
 
 def price(p):
     """'1.695' -> 1695"""
@@ -41,7 +49,7 @@ def main():
         pt = price(it['pr'])
         ps = price(sup['pr']) if sup else None
         pk = price(m['pr'])
-        grup = 'G04' if it['pg'] < 151 else 'G05'
+        grup = group_of(it['pg'])
         rows.append({
             'grup': grup,
             'familia': fam.get(code, ''),
@@ -67,7 +75,7 @@ def main():
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()), delimiter=';')
         w.writeheader()
         w.writerows(rows)
-    print(len(rows), 'files → relacions-g4-g5.csv')
+    print(len(rows), 'files →', os.path.basename(OUT))
 
 if __name__ == '__main__':
     main()
