@@ -912,6 +912,38 @@
     .ref-copy-btn:hover { color: var(--primary); background: rgba(232,82,42,0.08); }
     .ref-star-btn:hover { color: var(--primary); background: rgba(232,82,42,0.08); }
     .ref-star-btn.on { color: var(--primary); }
+    /* relació sobretaula ↔ suport ↔ versió muntada */
+    .ref-rel-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 2px 3px; color: #c0c0b8; line-height: 1;
+      display: flex; align-items: center; border-radius: 4px;
+      transition: color 0.12s, background 0.12s, transform 0.15s;
+    }
+    .ref-rel-btn:hover { color: var(--primary); background: rgba(232,82,42,0.08); }
+    .ref-rel-btn.open { color: var(--primary); transform: rotate(90deg); }
+    .ref-rel-list {
+      display: flex; flex-direction: column; gap: 2px;
+      margin: 1px 0 3px 10px; padding-left: 8px;
+      border-left: 2px solid #ede9e2;
+      max-height: 180px; overflow-y: auto;
+    }
+    .ref-rel-row {
+      background: none; border: none; cursor: pointer; text-align: left;
+      padding: 3px 6px; border-radius: 6px; font-family: inherit;
+      transition: background 0.12s;
+    }
+    .ref-rel-row:hover { background: rgba(232,82,42,0.07); }
+    .ref-rel-kind {
+      display: block; font-size: 8px; font-weight: 700; letter-spacing: 0.04em;
+      color: #a8a49c; text-transform: uppercase;
+    }
+    .ref-rel-main {
+      display: block; font-size: 10.5px; font-weight: 600; color: #333;
+      font-family: ui-monospace, 'Cascadia Code', 'SFMono-Regular', monospace;
+      white-space: nowrap;
+    }
+    .ref-rel-main .rel-price { color: var(--primary); font-weight: 700; }
+    .ref-rel-main .rel-page  { color: #a8a49c; font-weight: 500; }
     .refs-panel[hidden] { display: none; }
     @media (max-width: 500px) {
       .refs-panel { right: 8px; max-height: 50vh; }
@@ -2750,6 +2782,64 @@ async function loadPageRefs() {
 }
 loadPageRefs();
 
+// ── RELACIONS sobretaula ↔ suport ↔ muntada (NOMÉS equip intern) ────────
+// Eina operativa (evitar compres quan es pot muntar amb estoc existent),
+// no informació per al client: només es carrega si el navegador té marca
+// d'equip (?viewer=<nom> o ?internal=1, persistides a localStorage).
+// Dades: relations.json, generat per scripts/build-relations.py (G4+G5).
+const relMap = new Map();
+const IS_TEAM = (() => {
+  try {
+    return localStorage.getItem('eurast_internal') === '1'
+        || !!localStorage.getItem('eurast_viewer');
+  } catch(_) { return false; }
+})();
+async function loadRelations() {
+  if (!IS_TEAM) return;
+  try {
+    const data = await fetch('relations.json').then(r => r.json());
+    for (const code in data.items) relMap.set(code, data.items[code]);
+    updateRefsPanel();
+  } catch(_) {}
+}
+loadRelations();
+
+const REL_STRINGS = {
+  es: { mounted: 'Versión con soporte', top: 'Versión sobremesa', support: 'Soporte', fits: 'Compatible con', open: 'abierto', doors: 'con puertas', drawers: 'con cajones' },
+  en: { mounted: 'Version with support', top: 'Tabletop version', support: 'Support', fits: 'Fits', open: 'open', doors: 'with doors', drawers: 'with drawers' },
+  fr: { mounted: 'Version sur support', top: 'Version de table', support: 'Support', fits: 'Compatible avec', open: 'ouvert', doors: 'avec portes', drawers: 'avec tiroirs' },
+  de: { mounted: 'Version mit Unterbau', top: 'Tischversion', support: 'Unterbau', fits: 'Passt zu', open: 'offen', doors: 'mit Türen', drawers: 'mit Schubladen' },
+  it: { mounted: 'Versione con supporto', top: 'Versione da banco', support: 'Supporto', fits: 'Compatibile con', open: 'aperto', doors: 'con porte', drawers: 'con cassetti' },
+  pt: { mounted: 'Versão com suporte', top: 'Versão de bancada', support: 'Suporte', fits: 'Compatível com', open: 'aberto', doors: 'com portas', drawers: 'com gavetas' },
+};
+const REL_CHEVRON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+
+// Llista desplegable de refs relacionades sota un chip del panell REFS.
+function buildRelList(ref) {
+  const rx = REL_STRINGS[currentLang] || REL_STRINGS.es;
+  const s  = STRINGS[currentLang].search;
+  const list = document.createElement('div');
+  list.className = 'ref-rel-list';
+  const entry = relMap.get(ref);
+  entry.rel.forEach(([code, kind]) => {
+    const r = relMap.get(code);
+    if (!r) return;
+    const variant = (kind === 'support' && r.v) ? ` · ${rx[r.v]}` : '';
+    const row = document.createElement('button');
+    row.className = 'ref-rel-row';
+    row.title = r.d;   // dimensions al tooltip
+    row.innerHTML = `<span class="ref-rel-kind">${rx[kind]}${variant}</span>
+      <span class="ref-rel-main">${escapeHtml(code)} · <span class="rel-price">${escapeHtml(r.pr)} €</span> · <span class="rel-page">${s.pageAbbr} ${r.pg}</span></span>`;
+    row.addEventListener('click', () => {
+      phCapture('relation_clicked', { from: ref, to: code, kind, page: r.pg });
+      goTo(r.pg);
+      highlightRef(r.pg, code);
+    });
+    list.appendChild(row);
+  });
+  return list;
+}
+
 function renderRefsPanel(refs) {
   const panel = document.getElementById('refsPanel');
   const chips = document.getElementById('refsChips');
@@ -2778,6 +2868,21 @@ function renderRefsPanel(refs) {
       starBtn.classList.toggle('on', isFav(ref));
     });
     chips.appendChild(chip);
+    // Desplegable de relacions (només equip intern, vegeu loadRelations)
+    if (relMap.has(ref)) {
+      const relBtn = document.createElement('button');
+      relBtn.className = 'ref-rel-btn';
+      relBtn.innerHTML = REL_CHEVRON;
+      chip.appendChild(relBtn);
+      let listEl = null;
+      relBtn.addEventListener('click', () => {
+        if (listEl) { listEl.remove(); listEl = null; relBtn.classList.remove('open'); return; }
+        listEl = buildRelList(ref);
+        chip.after(listEl);
+        relBtn.classList.add('open');
+        phCapture('relations_expanded', { ref, page: currentPage });
+      });
+    }
   });
   panel.hidden = false;
 }
@@ -3000,7 +3105,14 @@ searchInput.addEventListener('input', () => {
 });
 searchInput.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeSearch(); searchInput.blur(); }
-  if (e.key === 'Enter')  { clearTimeout(searchTimer); runSearch(); }
+  if (e.key === 'Enter') {
+    // Enter = anar directament al primer resultat (runSearch és síncron un
+    // cop l'índex està carregat, així que la llista ja està renderitzada).
+    clearTimeout(searchTimer);
+    runSearch();
+    const first = document.querySelector('#searchResults .search-result');
+    if (first) { first.click(); searchInput.blur(); }
+  }
 });
 // Hide results when focus leaves the bar/results (delay so result clicks land)
 searchInput.addEventListener('blur', () => setTimeout(() => {
