@@ -2803,8 +2803,9 @@ async function loadPageRefs() {
     for (const entry of data.pages) {
       if (!GROUPS[entry.g]) continue;
       const absPage = entry.p;
-      // Filter out dimension strings like "400X400" — keep only 8-char product codes
-      const refs = entry.c.filter(c => /^[0-9][0-9A-Z]{6,7}$/.test(c) && !/\dX\d/.test(c));
+      // Filter out dimension strings like "400X400" — keep product codes,
+      // both the standard 7-8 char ones and the short all-digit ones (92462)
+      const refs = entry.c.filter(c => /^[0-9][0-9A-Z]{4,7}$/.test(c) && !/\dX\d/.test(c));
       if (refs.length > 0) pageRefs.set(absPage, refs);
       refs.forEach(c => { if (!codePage.has(c)) codePage.set(c, absPage); });
     }

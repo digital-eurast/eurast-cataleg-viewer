@@ -38,15 +38,30 @@ DIMS_RE = re.compile(r'^(\d{3,4})x(\d{3,4})(x\d{3,4})?$', re.I)
 # Order codes by their position in the actual price table, not by PDF reading
 # order — a code's caption near its product photo is often read by fitz
 # BEFORE the table row that repeats it, which scrambled the widget/table order
-# relative to what's visually printed. We locate the table column(s) (tight,
-# evenly-spaced rows at a consistent x — as opposed to the widely-spaced
-# per-photo captions above) and read them top-to-bottom, left-to-right.
+# relative to what's visually printed.
+#
+# El criteri per "fila de taula" és que la FILA ACABI EN PREU (cel·la final
+# numèrica tipus 450 / 5.910): és l'únic senyal estable a tot el catàleg.
+# Els criteris estructurals (columnes alineades amb salts petits) fallaven
+# amb les graelles de llegendes sota les fotos (pàg. 298), les taules-matriu
+# (pàg. 632) i les files úniques (pàg. 296), i el llindar de dígits del codi
+# es pot mantenir baix (>=3, per codis tipus 41RX5ETM) sense colar brossa de
+# capçaleres ("450SNACK"), perquè aquella brossa mai té preu a la seva fila.
 # Returns [(code, dims)] where dims is the WxDxH cell found on the code's
 # table row ('' if none) — powers the dimension search in the viewer.
+# Preu: 25 / 450 / 5.910 / 15.355 — també n'hi ha de 2 xifres (accessoris).
+PRICE_RE = re.compile(r'^\d{1,3}(\.\d{3})+$|^\d{2,5}$')
+# Codi curt: 5-6 xifres soltes (p.ex. rasquetes 96107, cistelles 92462).
+# Només s'accepta en fila amb preu i amb >=2 cel·les a la dreta — un preu
+# solt mai en té. NO es pot baixar a 4 xifres: les amplades en mm de
+# campanes/mesas/estanteries (1000, 1200... 5000) són números de 4 xifres
+# solts en files amb preu i inundarien el panell (provat: +250 falsos).
+# Limitació coneguda: el codi '9187' (cistella, pàg. 655) queda fora.
+SHORT_CODE_RE = re.compile(r'^\d{5,6}$')
 def codes(doc, pno):
     d = doc[pno - 1].get_text('dict')
-    items = []  # (x, y, code)
-    all_lines = []  # (x, y, text) — for same-row dims lookup
+    items = []  # (x, y, code, ndigits, short)
+    all_lines = []  # (x, y, text) — for same-row cell lookups
     for b in d['blocks']:
         for ln in b.get('lines', []):
             text = ''.join(sp['text'] for sp in ln['spans'])
@@ -54,47 +69,52 @@ def codes(doc, pno):
             if t:
                 all_lines.append((ln['bbox'][0], ln['bbox'][1], t))
             c = t.replace(' ', '').upper()
-            if CODE_RE.match(c) and len(re.findall(r'[0-9]', c)) >= 5:
-                items.append((ln['bbox'][0], ln['bbox'][1], c))
+            if CODE_RE.match(c) and len(re.findall(r'[0-9]', c)) >= 3:
+                items.append((ln['bbox'][0], ln['bbox'][1], c,
+                              len(re.findall(r'[0-9]', c)), False))
+            elif SHORT_CODE_RE.match(c):
+                items.append((ln['bbox'][0], ln['bbox'][1], c, len(c), True))
     if not items:
         return []
 
+    def row_cells(x, y):
+        return sorted((lx, lt) for lx, ly, lt in all_lines
+                      if abs(ly - y) < 4 and lx > x + 5)
+
     def dims_at(x, y):
-        for lx, ly, lt in all_lines:
-            if lx > x + 5 and abs(ly - y) < 4 and DIMS_RE.match(lt.replace(' ', '')):
+        for _, lt in row_cells(x, y):
+            if DIMS_RE.match(lt.replace(' ', '')):
                 return lt.replace(' ', '').lower()
         return ''
 
-    # Cluster into x-columns (tolerant of the few px of jitter between rows).
-    items.sort(key=lambda t: t[0])
-    cols = []
-    for x, y, c in items:
-        if cols and x - cols[-1]['x'] <= 4:
-            cols[-1]['items'].append((y, c))
-            cols[-1]['x'] = x
-        else:
-            cols.append({'x': x, 'items': [(y, c)]})
-
-    # A genuine table column has >=2 rows with tight (line-height) y-gaps;
-    # photo captions stacked in the same visual column are spaced much wider
-    # (image height apart).
     table_items, caption_items = [], []
-    for col in cols:
-        rows = sorted(col['items'], key=lambda t: t[0])
-        gaps = [rows[i + 1][0] - rows[i][0] for i in range(len(rows) - 1)]
-        is_table = len(rows) >= 2 and gaps and max(gaps) <= 30
-        for y, c in rows:
-            (table_items if is_table else caption_items).append((y, col['x'], c))
+    for x, y, c, nd, short in items:
+        cells = row_cells(x, y)
+        # Fila de taula: alguna cel·la de la fila és un preu. No exigim que
+        # sigui l'ÚLTIMA perquè amb dues taules costat a costat les cel·les
+        # de la taula veïna queden més a la dreta que el preu propi (p. 243).
+        has_price = any(PRICE_RE.match(lt.replace(' ', '')) for _, lt in cells)
+        if short:
+            # Codi curt: només via fila amb preu i descripció (mai caption) —
+            # un número solt de 5 xifres fora d'aquest context no és un codi.
+            if len(cells) >= 2 and has_price:
+                table_items.append((y, x, c))
+        elif cells and has_price:
+            table_items.append((y, x, c))
+        elif nd >= 5:
+            # Fora d'una fila amb preu el llindar torna a 5 dígits: és on
+            # viuen els falsos positius de capçalera ("450SNACK").
+            caption_items.append((y, x, c))
 
-    # Row-major order across table column(s) — same-row entries (e.g. two
-    # model variants side by side) share a y-band and sort left-to-right.
+    # Row-major order — same-row entries (e.g. two model variants side by
+    # side) share a y-band and sort left-to-right.
     table_items.sort(key=lambda t: (round(t[0] / 6), t[1]))
     out, seen = [], set()
     for y, x, c in table_items:
         if c not in seen:
             seen.add(c); out.append((c, dims_at(x, y)))
-    # Codes seen only in captions (no matching table row) are appended after,
-    # in their natural top-to-bottom order.
+    # Codes seen only in captions (no price row of their own) are appended
+    # after, in their natural top-to-bottom order.
     caption_items.sort(key=lambda t: (t[0], t[1]))
     for y, x, c in caption_items:
         if c not in seen:
