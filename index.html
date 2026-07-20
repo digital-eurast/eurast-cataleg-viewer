@@ -816,6 +816,11 @@
       background: #fff; border: 1px solid #e0e0d8;
       border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,0.15);
       z-index: 900; min-width: 260px; max-height: 380px; overflow-y: auto;
+      /* Sense max-width, els títols de secció llargs ("COCINAS SOBRE
+         SOPORTE ABIERTO A GAS") feien créixer la caixa fins als ~600px
+         perquè no hi havia amplada fixa on l'ellipsis pogués tallar —
+         al mòbil (barra de 250px) es desbordava fora de pantalla. */
+      max-width: min(300px, calc(100vw - 24px));
     }
     .drop-hdr {
       display: flex; align-items: center; justify-content: space-between;
@@ -832,15 +837,18 @@
       border: none; background: none; flex: 1; text-align: left;
     }
     .drop-group-item:hover, .drop-group-item.active { background: #fff5f0; }
+    /* Fons persistent (no només a l'hover) i mida de toc ~28px perquè es
+       vegi d'entrada que és una acció clicable, no una simple decoració. */
     .drop-group-chevron {
-      background: none; border: none; cursor: pointer;
-      padding: 2px 3px; color: #c0c0b8; line-height: 1;
-      display: flex; align-items: center; border-radius: 4px;
-      margin-right: 8px; flex-shrink: 0;
+      background: #f2f2ec; border: none; cursor: pointer;
+      width: 26px; height: 26px; color: #a8a49c; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 7px; margin-right: 6px; flex-shrink: 0;
       transition: color 0.12s, background 0.12s, transform 0.15s;
     }
-    .drop-group-chevron:hover { color: var(--primary); background: rgba(232,82,42,0.08); }
-    .drop-group-chevron.open { color: var(--primary); transform: rotate(90deg); }
+    .drop-group-chevron svg { width: 14px; height: 14px; }
+    .drop-group-chevron:hover { color: var(--primary); background: rgba(232,82,42,0.12); }
+    .drop-group-chevron.open { color: #fff; background: var(--primary); transform: rotate(90deg); }
     .drop-g-badge {
       background: var(--primary); color: #fff; border-radius: 4px;
       font-size: 11px; font-weight: 700; padding: 1px 5px;
@@ -2793,11 +2801,17 @@ function buildDropGroupList() {
 
 function openGroupDropdown() {
   const dd = document.getElementById('groupDropdown');
-  if (!dd.hidden) { dd.hidden = true; return; }
+  if (!dd.hidden) { dd.hidden = true; updateRefsPanel(); return; }
   document.getElementById('dropHdrText').textContent = DROP_LABEL[currentLang];
   dropExpandedIdx = getGroupIdxForPage(currentPage); // el grup actiu surt expandit per defecte
   buildDropGroupList();
   dd.hidden = false;
+  // A mòbil el desplegable viu dins la barra lateral (position:fixed, el seu
+  // propi context d'apilament): el seu z-index no pot competir amb el panell
+  // REFS, que és fixed fora de la barra. S'amaga mentre el desplegable és
+  // obert; es recupera en tancar via updateRefsPanel (mateixa lògica que ja
+  // decideix si hi ha d'haver panell a la pàgina actual).
+  document.getElementById('refsPanel').hidden = true;
   // Auto-scroll perquè el grup actiu (amb les seves seccions) quedi visible.
   const activeItem = dd.querySelector('.drop-group-item.active');
   if (activeItem) activeItem.scrollIntoView({ block: 'nearest' });
@@ -2805,6 +2819,7 @@ function openGroupDropdown() {
 
 function closeGroupDropdown() {
   document.getElementById('groupDropdown').hidden = true;
+  updateRefsPanel();
 }
 
 function navigateFromPill() {
