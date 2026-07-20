@@ -2442,22 +2442,42 @@ document.getElementById('btnPages').addEventListener('click', () => {
 
 // ── RESIZE ────────────────────────────────────────────────────────
 let resizeTimer;
+let lastVW = window.innerWidth;   // per distingir resize d'amplada (zoom) del d'alçada (barra mòbil)
 window.addEventListener('resize', () => {
   if (flipModeActive) return; // flip handles its own resize via syncFlipZoom
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
     rendered.clear();
+    // El zoom del navegador (Ctrl +) arriba aquí com un resize: canvia
+    // l'amplada de pàgina i, per tant, l'alçada de les 861. Sense fixar la
+    // pàgina i aturar l'observer, l'scroll queda on era en píxels i acabes
+    // unes quantes pàgines més enllà a cada pas de zoom.
+    // Només es recol·loca si ha canviat l'AMPLADA: a mòbil, amagar i mostrar
+    // la barra d'adreces mentre es fa scroll dispara resize d'alçada, i
+    // recol·locar-hi tornaria l'usuari a dalt de la pàgina a cada passada.
+    const target = currentPage;
+    const reposicionar = window.innerWidth !== lastVW;
+    lastVW = window.innerWidth;
+    if (reposicionar) observerReady = false;
     slots.forEach(s => { s.innerHTML = LOADER_HTML; });
     const w = calcPageWidth();
     slots.forEach(s => {
       s.style.width  = w + 'px';
       s.style.height = Math.round(w * sampleRatio) + 'px';
     });
-    for (let i = Math.max(1, currentPage - PRERENDER); i <= Math.min(totalPages, currentPage + PRERENDER); i++) {
+    if (reposicionar) {
+      currentPage = target;
+      slots[target - 1]?.scrollIntoView({ behavior: 'instant', block: 'start' });
+    }
+    for (let i = Math.max(1, target - PRERENDER); i <= Math.min(totalPages, target + PRERENDER); i++) {
       renderSlot(i);
     }
+    if (reposicionar) {
+      updateNav(target);
+      setTimeout(() => { observerReady = true; }, 350);
+    }
     // El text layer es reconstrueix: torna a pintar la ref ressaltada
-    if (hlRef && hlRef.page === currentPage) highlightRef(currentPage, hlRef.code, false);
+    if (hlRef && hlRef.page === target) highlightRef(target, hlRef.code, false);
   }, 200);
 });
 
