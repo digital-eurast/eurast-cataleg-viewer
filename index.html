@@ -839,6 +839,21 @@
     .drop-g-badge.dim { background: #e0e0d8; color: #888; }
     .drop-g-name { flex: 1; color: #333; }
     .drop-g-pages { font-size: 11px; color: #c0c0b8; }
+    /* ── Salts de secció dins del grup actiu ── */
+    .drop-section-list { border-bottom: 1px solid #f0f0ea; padding-bottom: 3px; }
+    .drop-section-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 4px 14px 4px 40px; cursor: pointer; font-size: 12px;
+      border: none; background: none; width: 100%; text-align: left;
+      color: #888; text-transform: uppercase; letter-spacing: 0.02em;
+    }
+    .drop-section-item:hover, .drop-section-item.active { background: #fff5f0; }
+    .drop-section-item.active { color: var(--primary); font-weight: 600; }
+    .drop-sec-title {
+      flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .drop-sec-page { font-size: 11px; color: #c0c0b8; flex-shrink: 0; }
+    .drop-section-item.active .drop-sec-page { color: var(--primary); }
     .drop-close-btn {
       background: none; border: none; cursor: pointer;
       font-size: 16px; line-height: 1; color: #bbb;
@@ -2715,6 +2730,31 @@ function buildDropGroupList() {
       <span class="drop-g-pages">${pages}</span>`;
     btn.addEventListener('click', () => { goTo(g.page); closeGroupDropdown(); });
     list.appendChild(btn);
+
+    // Sota el grup ACTIU, mostra els seus salts de secció (famílies) com a
+    // subllista indentada perquè es pugui saltar dins del grup sense scroll.
+    if (idx === curIdx) {
+      const secs = groupSections[idx] || [];
+      if (secs.length) {
+        const secWrap = document.createElement('div');
+        secWrap.className = 'drop-section-list';
+        // Secció activa = l'última que comença en una pàgina <= currentPage.
+        let activeSec = -1;
+        secs.forEach((s, si) => { if (s.page <= currentPage) activeSec = si; });
+        secs.forEach((s, si) => {
+          const sbtn = document.createElement('button');
+          sbtn.className = 'drop-section-item' + (si === activeSec ? ' active' : '');
+          sbtn.innerHTML = `<span class="drop-sec-title">${escapeHtml(s.title)}</span>
+            <span class="drop-sec-page">${s.page}</span>`;
+          sbtn.addEventListener('click', () => {
+            phCapture('section_clicked', { group_id: g.id, title: s.title, page: s.page });
+            goTo(s.page); closeGroupDropdown();
+          });
+          secWrap.appendChild(sbtn);
+        });
+        list.appendChild(secWrap);
+      }
+    }
   });
 }
 
@@ -2724,6 +2764,9 @@ function openGroupDropdown() {
   document.getElementById('dropHdrText').textContent = DROP_LABEL[currentLang];
   buildDropGroupList();
   dd.hidden = false;
+  // Auto-scroll perquè el grup actiu (amb les seves seccions) quedi visible.
+  const activeItem = dd.querySelector('.drop-group-item.active');
+  if (activeItem) activeItem.scrollIntoView({ block: 'nearest' });
 }
 
 function closeGroupDropdown() {
@@ -2871,12 +2914,29 @@ const SMALL_STAR = '<svg width="12" height="12" viewBox="0 0 24 24" fill="curren
 
 // Load page→refs mapping from references.json (refs are in images, not PDF text)
 const codePage = new Map();   // code → absolute page (per a #ref= deep links)
+// Salts de secció per grup: groupSections[groupIdx] = [{title, page}, …] ordenat
+// per pàgina. Cada secció és una tirada consecutiva de pàgines del mateix grup
+// amb la mateixa família (camp `f`). Es fa servir al desplegable de grups.
+const groupSections = {};
 async function loadPageRefs() {
   try {
     const data = await fetch('references.json').then(r => r.json());
+    // Estat per col·lapsar tirades consecutives del mateix grup+família en
+    // una sola secció (la pàgina és la primera de la tirada).
+    let prevG = null, prevF = null;
     for (const entry of data.pages) {
-      if (!GROUPS[entry.g]) continue;
+      if (!GROUPS[entry.g]) { prevG = null; prevF = null; continue; }
       const absPage = entry.p;
+      // Construeix els salts de secció del desplegable de grups.
+      const fam = (entry.f || '').trim();
+      if (fam) {
+        if (!(entry.g === prevG && fam === prevF)) {
+          (groupSections[entry.g] || (groupSections[entry.g] = [])).push({ title: fam, page: absPage });
+        }
+        prevG = entry.g; prevF = fam;
+      } else {
+        prevG = null; prevF = null;
+      }
       // Filter out dimension strings like "400X400" — keep product codes,
       // both the standard 7-8 char ones and the short all-digit ones (92462)
       const refs = entry.c.filter(c => /^[0-9][0-9A-Z]{4,7}$/.test(c) && !/\dX\d/.test(c));
