@@ -1373,6 +1373,7 @@ let flipModeActive = false;     // false = vertical scroll, true = flip book
 let hlRef   = null;   // { code, page }
 let hlBoxes = [];     // caixes de ressaltat afegides al textLayer
 let hlClearTimer = null;
+let hlRun = 0;        // testimoni: invalida els sondejos de highlightRef anteriors
 let twoPage = false;            // false = 1 page, true = 2 pages (both modes)
 let flipSetPages = null;        // assigned in flip init; applies twoPage to flip
 const slots    = [];
@@ -2355,12 +2356,17 @@ let zoomTimer = null;
 function applyZoom() {
   document.getElementById('zoomLbl').textContent = Math.round(zoom * 100) + '%';
   if (flipModeActive && flipApplyZoom) { flipApplyZoom(); return; }
+  // Fixa la pàgina ABANS de tocar el layout i atura l'observer: canviar
+  // l'alçada de totes les pàgines el dispara amb el layout nou, reescriu
+  // currentPage i el scrollIntoView de sota acabava en una altra pàgina.
+  const target = currentPage;
+  observerReady = false;
   const w = calcPageWidth();
   slots.forEach(s => {
     s.style.width  = w + 'px';
     s.style.height = Math.round(w * sampleRatio) + 'px';
   });
-  slots[currentPage - 1]?.scrollIntoView({ behavior: 'instant', block: 'start' });
+  slots[target - 1]?.scrollIntoView({ behavior: 'instant', block: 'start' });
 
   clearTimeout(zoomTimer);
   zoomTimer = setTimeout(() => {
@@ -2369,11 +2375,17 @@ function applyZoom() {
     renderQueue.clear();
     rendered.clear();
     slots.forEach(s => { s.innerHTML = LOADER_HTML; });
-    slots[currentPage - 1]?.scrollIntoView({ behavior: 'instant', block: 'start' });
-    renderSlot(currentPage);
-    for (let i = Math.max(1, currentPage - PRERENDER); i <= Math.min(totalPages, currentPage + PRERENDER); i++) {
+    currentPage = target;
+    slots[target - 1]?.scrollIntoView({ behavior: 'instant', block: 'start' });
+    renderSlot(target);
+    for (let i = Math.max(1, target - PRERENDER); i <= Math.min(totalPages, target + PRERENDER); i++) {
       renderSlot(i);
     }
+    updateNav(target);
+    // El text layer es reconstrueix: torna a pintar la ref ressaltada (sense
+    // moure l'scroll, que el zoom ja l'ha col·locat).
+    if (hlRef && hlRef.page === target) highlightRef(target, hlRef.code, false);
+    setTimeout(() => { observerReady = true; }, 350);
   }, IS_MOBILE ? 350 : 50);
 }
 
@@ -2404,6 +2416,8 @@ function relayoutScroll() {
     renderSlot(i);
   }
   slots[currentPage - 1]?.scrollIntoView({ behavior: 'instant', block: 'start' });
+  // El text layer es reconstrueix: torna a pintar la ref ressaltada
+  if (hlRef && hlRef.page === currentPage) highlightRef(currentPage, hlRef.code, false);
   setTimeout(() => { observerReady = true; }, 350);
 }
 
@@ -2442,6 +2456,8 @@ window.addEventListener('resize', () => {
     for (let i = Math.max(1, currentPage - PRERENDER); i <= Math.min(totalPages, currentPage + PRERENDER); i++) {
       renderSlot(i);
     }
+    // El text layer es reconstrueix: torna a pintar la ref ressaltada
+    if (hlRef && hlRef.page === currentPage) highlightRef(currentPage, hlRef.code, false);
   }, 200);
 });
 
@@ -3231,6 +3247,7 @@ function fullTextSearch(q, qNorm) {
 // REFS panel. El ressaltat es manté mentre siguem a la pàgina — es neteja en
 // canviar de pàgina (updateNav) o en ressaltar-ne una altra.
 function clearRefHighlight() {
+  hlRun++;   // atura qualsevol sondeig en curs (si no, hi pinta la seva caixa)
   hlBoxes.forEach(b => b.remove());
   hlBoxes = [];
   hlRef   = null;
@@ -3302,24 +3319,25 @@ function addRefHlBox(tl, group) {
   return box;
 }
 
-function highlightRef(pageNum, code) {
+function highlightRef(pageNum, code, scroll = true) {
   code = String(code).replace(/\s/g, '').toUpperCase();
   clearRefHighlight();
+  const run = hlRun;   // clearRefHighlight l'acaba d'incrementar
   hlRef = { code, page: pageNum };
   applyChipHighlight();
   if (flipModeActive) return;
   let tries = 0;
   const timer = setInterval(() => {
     tries++;
-    // Una altra ref (o un canvi de pàgina) ha pres el relleu
-    if (!hlRef || hlRef.code !== code) { clearInterval(timer); return; }
+    // Una altra crida (o un canvi de pàgina) ha pres el relleu
+    if (run !== hlRun || !hlRef) { clearInterval(timer); return; }
     const slot = slots[pageNum - 1];
     const tl   = slot && slot.querySelector('.textLayer');
     if (tl) {
       const groups = findRefSpans(tl, code);
       if (groups.length) {
         groups.forEach(g => { const box = addRefHlBox(tl, g); if (box) hlBoxes.push(box); });
-        groups[0][0].scrollIntoView({ block: 'center', behavior: 'smooth' });
+        if (scroll) groups[0][0].scrollIntoView({ block: 'center', behavior: 'smooth' });
         clearInterval(timer);
         return;
       }
