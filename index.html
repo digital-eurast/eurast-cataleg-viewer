@@ -3270,26 +3270,33 @@ function findRefSpans(tl, code) {
   return groups;
 }
 
-// Una caixa que cobreix el conjunt d'spans d'una aparició. Es mesura amb
-// getBoundingClientRect (els spans de pdf.js porten un scaleX propi) i es
-// desescala amb el zoom del contenidor per treballar en px locals del layer.
+// Una caixa que cobreix el conjunt d'spans d'una aparició. Es mesura el text
+// amb un Range i no amb getBoundingClientRect de l'span: els spans porten
+// padding (8px amunt i avall, .6em a la dreta) per ampliar l'àrea de selecció,
+// i la caixa sortiria tres cops més alta que la lletra i trepitjaria la línia
+// del costat. El Range dona el rectangle de les lletres, ja amb el scaleX que
+// pdf.js aplica a cada span. Es desescala amb el zoom del contenidor.
 function addRefHlBox(tl, group) {
   const base  = tl.getBoundingClientRect();
   const scale = tl.offsetWidth ? base.width / tl.offsetWidth : 1;
+  const range = document.createRange();
   let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
   group.forEach(sp => {
-    const q = sp.getBoundingClientRect();
-    l = Math.min(l, (q.left   - base.left) / scale);
-    t = Math.min(t, (q.top    - base.top)  / scale);
-    r = Math.max(r, (q.right  - base.left) / scale);
-    b = Math.max(b, (q.bottom - base.top)  / scale);
+    range.selectNodeContents(sp);
+    const rects = [...range.getClientRects()];
+    (rects.length ? rects : [sp.getBoundingClientRect()]).forEach(q => {
+      l = Math.min(l, (q.left   - base.left) / scale);
+      t = Math.min(t, (q.top    - base.top)  / scale);
+      r = Math.max(r, (q.right  - base.left) / scale);
+      b = Math.max(b, (q.bottom - base.top)  / scale);
+    });
   });
   if (!isFinite(l)) return null;
   const box = document.createElement('div');
   box.className = 'ref-hl-box';
-  box.style.left   = (l - 3) + 'px';
+  box.style.left   = (l - 2) + 'px';
   box.style.top    = (t - 2) + 'px';
-  box.style.width  = (r - l + 6) + 'px';
+  box.style.width  = (r - l + 4) + 'px';
   box.style.height = (b - t + 4) + 'px';
   tl.appendChild(box);
   return box;
