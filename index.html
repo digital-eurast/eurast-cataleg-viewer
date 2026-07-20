@@ -825,12 +825,22 @@
       position: sticky; top: 0; background: #fff;
       border-radius: 10px 10px 0 0;
     }
+    .drop-group-row { display: flex; align-items: center; }
     .drop-group-item {
       display: flex; align-items: center; gap: 10px;
       padding: 7px 14px; cursor: pointer; font-size: 13px;
-      border: none; background: none; width: 100%; text-align: left;
+      border: none; background: none; flex: 1; text-align: left;
     }
     .drop-group-item:hover, .drop-group-item.active { background: #fff5f0; }
+    .drop-group-chevron {
+      background: none; border: none; cursor: pointer;
+      padding: 2px 3px; color: #c0c0b8; line-height: 1;
+      display: flex; align-items: center; border-radius: 4px;
+      margin-right: 8px; flex-shrink: 0;
+      transition: color 0.12s, background 0.12s, transform 0.15s;
+    }
+    .drop-group-chevron:hover { color: var(--primary); background: rgba(232,82,42,0.08); }
+    .drop-group-chevron.open { color: var(--primary); transform: rotate(90deg); }
     .drop-g-badge {
       background: var(--primary); color: #fff; border-radius: 4px;
       font-size: 11px; font-weight: 700; padding: 1px 5px;
@@ -2715,6 +2725,7 @@ function updateSubPage(pageNum) {
 
 // ── GROUP DROPDOWN ────────────────────────────────────────────────
 const DROP_LABEL = { es:'Grupo', en:'Group', fr:'Groupe', de:'Gruppe', it:'Gruppo', pt:'Grupo' };
+let dropExpandedIdx = -1; // índex del grup expandit al desplegable (independent del grup actiu)
 
 function buildDropGroupList() {
   const list = document.getElementById('dropGroupList');
@@ -2723,24 +2734,46 @@ function buildDropGroupList() {
   GROUPS.forEach((g, idx) => {
     const endPage = idx + 1 < GROUPS.length ? GROUPS[idx + 1].page - 1 : totalPages;
     const pages = endPage - g.page + 1;
+    // Fila del grup: cos navegable (drop-group-item) + xebró d'expansió, dins
+    // d'un div (no es poden niar botons).
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'drop-group-row';
     const btn = document.createElement('button');
     btn.className = 'drop-group-item' + (idx === curIdx ? ' active' : '');
     btn.innerHTML = `<span class="drop-g-badge${idx !== curIdx ? ' dim' : ''}">${g.id}</span>
       <span class="drop-g-name">${g[currentLang]}</span>
       <span class="drop-g-pages">${pages}</span>`;
     btn.addEventListener('click', () => { goTo(g.page); closeGroupDropdown(); });
-    list.appendChild(btn);
+    rowDiv.appendChild(btn);
 
-    // Sota el grup ACTIU, mostra els seus salts de secció (famílies) com a
+    // Xebró per expandir/plegar les seccions de QUALSEVOL grup (només si en té).
+    if ((groupSections[idx] || []).length > 0) {
+      const chev = document.createElement('button');
+      chev.className = 'drop-group-chevron' + (idx === dropExpandedIdx ? ' open' : '');
+      chev.innerHTML = REL_CHEVRON;
+      chev.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropExpandedIdx = dropExpandedIdx === idx ? -1 : idx;
+        buildDropGroupList();
+      });
+      rowDiv.appendChild(chev);
+    }
+    list.appendChild(rowDiv);
+
+    // Sota el grup EXPANDIT, mostra els seus salts de secció (famílies) com a
     // subllista indentada perquè es pugui saltar dins del grup sense scroll.
-    if (idx === curIdx) {
+    if (idx === dropExpandedIdx) {
       const secs = groupSections[idx] || [];
       if (secs.length) {
         const secWrap = document.createElement('div');
         secWrap.className = 'drop-section-list';
-        // Secció activa = l'última que comença en una pàgina <= currentPage.
+        // Secció activa = l'última que comença en una pàgina <= currentPage,
+        // però NOMÉS al grup on ets físicament (les pàgines són globals: en un
+        // altre grup expandit la comparació marcaria una secció errònia).
         let activeSec = -1;
-        secs.forEach((s, si) => { if (s.page <= currentPage) activeSec = si; });
+        if (idx === curIdx) {
+          secs.forEach((s, si) => { if (s.page <= currentPage) activeSec = si; });
+        }
         secs.forEach((s, si) => {
           const sbtn = document.createElement('button');
           sbtn.className = 'drop-section-item' + (si === activeSec ? ' active' : '');
@@ -2762,6 +2795,7 @@ function openGroupDropdown() {
   const dd = document.getElementById('groupDropdown');
   if (!dd.hidden) { dd.hidden = true; return; }
   document.getElementById('dropHdrText').textContent = DROP_LABEL[currentLang];
+  dropExpandedIdx = getGroupIdxForPage(currentPage); // el grup actiu surt expandit per defecte
   buildDropGroupList();
   dd.hidden = false;
   // Auto-scroll perquè el grup actiu (amb les seves seccions) quedi visible.
