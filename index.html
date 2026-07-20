@@ -347,6 +347,19 @@
       cursor: text;
     }
     .textLayer ::selection { background: rgba(0, 100, 255, 0.25); }
+    /* ref trobada per la cerca, ressaltada sobre la pàgina. Una sola caixa per
+       aparició (no un fons per span): pdf.js parteix la ref en diversos spans
+       i els fons translúcids se solaparien com dues seleccions. */
+    .textLayer .ref-hl-box {
+      position: absolute; pointer-events: none;
+      background: rgba(237,105,44,.42);
+      border-radius: 3px;
+      animation: refTextPulse 0.9s ease-in-out 2;
+    }
+    @keyframes refTextPulse {
+      0%, 100% { background: rgba(237,105,44,.42); }
+      50%      { background: rgba(237,105,44,.72); }
+    }
 
     /* ── PAGE LOADER (per slot) ── */
     .page-loader {
@@ -903,6 +916,18 @@
       font-size: 11px; font-family: ui-monospace, 'Cascadia Code', 'SFMono-Regular', monospace; font-weight: 600;
       color: #333; white-space: nowrap;
     }
+    /* ref trobada per la cerca: destaca el chip mentre siguem a la pàgina */
+    .ref-chip.hl {
+      background: rgba(232,82,42,0.12);
+      border-color: var(--primary);
+      color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(232,82,42,0.18);
+      animation: refChipPulse 0.9s ease-in-out 2;
+    }
+    @keyframes refChipPulse {
+      0%, 100% { box-shadow: 0 0 0 2px rgba(232,82,42,0.18); }
+      50%      { box-shadow: 0 0 0 6px rgba(232,82,42,0.30); }
+    }
     .ref-copy-btn, .ref-star-btn {
       background: none; border: none; cursor: pointer;
       padding: 2px 3px; color: #c0c0b8; line-height: 1;
@@ -1343,6 +1368,11 @@ let flipBook_instance = null;
 let flipGoTo = null;     // assigned in flip-book init; navigates flip mode reliably
 let flipApplyZoom = null; // assigned in flip-book init; applies zoom in flip mode
 let flipModeActive = false;     // false = vertical scroll, true = flip book
+// Ref ressaltada per la cerca (vegeu highlightRef). Declarades aquí dalt
+// perquè updateNav ja les llegeix durant l'arrencada (deep link #pag=).
+let hlRef   = null;   // { code, page }
+let hlBoxes = [];     // caixes de ressaltat afegides al textLayer
+let hlClearTimer = null;
 let twoPage = false;            // false = 1 page, true = 2 pages (both modes)
 let flipSetPages = null;        // assigned in flip init; applies twoPage to flip
 const slots    = [];
@@ -2265,6 +2295,14 @@ function updateNav(n) {
   updateActiveGroup(n);
   updateSubPage(n);
   history.replaceState(null, '', '#pag=' + n);
+  // En sortir de la pàgina de la ref trobada, deixa de ressaltar-la. Amb
+  // retard: un scroll suau passa per pàgines intermèdies abans d'arribar-hi.
+  if (hlRef) {
+    clearTimeout(hlClearTimer);
+    if (n !== hlRef.page) hlClearTimer = setTimeout(() => {
+      if (hlRef && currentPage !== hlRef.page) clearRefHighlight();
+    }, 1500);
+  }
   updateRefsPanel();
 }
 
@@ -2891,6 +2929,7 @@ function renderRefsPanel(refs) {
   refs.forEach(ref => {
     const chip = document.createElement('div');
     chip.className = 'ref-chip';
+    chip.dataset.ref = ref;   // per ressaltar-lo quan la cerca hi porta
     const starred = isFav(ref);
     chip.innerHTML = `<span>${escapeHtml(ref)}</span>
       <button class="ref-copy-btn" title="Copiar">${COPY_SVG}</button>
@@ -2926,6 +2965,7 @@ function renderRefsPanel(refs) {
     }
   });
   panel.hidden = false;
+  applyChipHighlight();   // el panell es re-renderitza a cada canvi de pàgina
 }
 
 function updateRefsPanel() {
@@ -3186,29 +3226,99 @@ function fullTextSearch(q, qNorm) {
   });
 }
 
-// After navigating to a page, scroll to and briefly highlight the reference
-// in the text layer (scroll viewer only; the flip book is a canvas).
+// After navigating to a page, scroll to and highlight the reference both in
+// the text layer (scroll viewer only; the flip book is a canvas) and in the
+// REFS panel. El ressaltat es manté mentre siguem a la pàgina — es neteja en
+// canviar de pàgina (updateNav) o en ressaltar-ne una altra.
+function clearRefHighlight() {
+  hlBoxes.forEach(b => b.remove());
+  hlBoxes = [];
+  hlRef   = null;
+  document.querySelectorAll('#refsChips .ref-chip.hl')
+    .forEach(c => c.classList.remove('hl'));
+}
+
+// Marca al panell REFS el chip de la ref ressaltada (i el fa visible).
+function applyChipHighlight() {
+  const chips = document.getElementById('refsChips');
+  if (!chips) return;
+  chips.querySelectorAll('.ref-chip').forEach(c => {
+    const on = !!hlRef && c.dataset.ref === hlRef.code;
+    c.classList.toggle('hl', on);
+    if (on) c.scrollIntoView({ block: 'nearest' });
+  });
+}
+
+// El text layer de pdf.js parteix les refs en spans ("4433" + "EP06"), així que
+// cal buscar el codi sobre el text concatenat i tornar tots els spans que el
+// cobreixen — buscar-lo span a span no el trobava mai. Torna un grup d'spans
+// per cada aparició del codi a la pàgina: l'etiqueta de la foto i el codi a la
+// taula de característiques de sota (només el codi, no tota la fila).
+function findRefSpans(tl, code) {
+  const spans = [...tl.querySelectorAll('span')];
+  const owner = [];   // índex de caràcter normalitzat → índex de span
+  let text = '';
+  spans.forEach((sp, i) => {
+    const t = (sp.textContent || '').replace(/\s/g, '').toUpperCase();
+    for (let k = 0; k < t.length; k++) owner.push(i);
+    text += t;
+  });
+  const groups = [];
+  for (let at = text.indexOf(code); at >= 0; at = text.indexOf(code, at + code.length)) {
+    groups.push([...new Set(owner.slice(at, at + code.length))].map(i => spans[i]));
+  }
+  return groups;
+}
+
+// Una caixa que cobreix el conjunt d'spans d'una aparició. Es mesura amb
+// getBoundingClientRect (els spans de pdf.js porten un scaleX propi) i es
+// desescala amb el zoom del contenidor per treballar en px locals del layer.
+function addRefHlBox(tl, group) {
+  const base  = tl.getBoundingClientRect();
+  const scale = tl.offsetWidth ? base.width / tl.offsetWidth : 1;
+  let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
+  group.forEach(sp => {
+    const q = sp.getBoundingClientRect();
+    l = Math.min(l, (q.left   - base.left) / scale);
+    t = Math.min(t, (q.top    - base.top)  / scale);
+    r = Math.max(r, (q.right  - base.left) / scale);
+    b = Math.max(b, (q.bottom - base.top)  / scale);
+  });
+  if (!isFinite(l)) return null;
+  const box = document.createElement('div');
+  box.className = 'ref-hl-box';
+  box.style.left   = (l - 3) + 'px';
+  box.style.top    = (t - 2) + 'px';
+  box.style.width  = (r - l + 6) + 'px';
+  box.style.height = (b - t + 4) + 'px';
+  tl.appendChild(box);
+  return box;
+}
+
 function highlightRef(pageNum, code) {
+  code = String(code).replace(/\s/g, '').toUpperCase();
+  clearRefHighlight();
+  hlRef = { code, page: pageNum };
+  applyChipHighlight();
   if (flipModeActive) return;
   let tries = 0;
   const timer = setInterval(() => {
     tries++;
+    // Una altra ref (o un canvi de pàgina) ha pres el relleu
+    if (!hlRef || hlRef.code !== code) { clearInterval(timer); return; }
     const slot = slots[pageNum - 1];
     const tl   = slot && slot.querySelector('.textLayer');
     if (tl) {
-      const target = [...tl.querySelectorAll('span')]
-        .find(sp => (sp.textContent || '').replace(/\s/g, '').toUpperCase().includes(code));
-      if (target) {
-        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
-        const prevBg = target.style.background;
-        target.style.background = 'rgba(237,105,44,.45)';
-        target.style.borderRadius = '2px';
-        setTimeout(() => { target.style.background = prevBg; }, 2600);
+      const groups = findRefSpans(tl, code);
+      if (groups.length) {
+        groups.forEach(g => { const box = addRefHlBox(tl, g); if (box) hlBoxes.push(box); });
+        groups[0][0].scrollIntoView({ block: 'center', behavior: 'smooth' });
         clearInterval(timer);
         return;
       }
     }
-    if (tries > 24) clearInterval(timer);
+    // ~15 s: en connexions lentes la pàgina pot trigar a renderitzar-se
+    if (tries > 100) clearInterval(timer);
   }, 150);
 }
 
