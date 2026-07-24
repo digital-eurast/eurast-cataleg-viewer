@@ -2331,16 +2331,19 @@ function updateNav(n) {
   history.replaceState(null, '', '#pag=' + n);
   // En sortir de la pàgina de la ref trobada, deixa de ressaltar-la. Amb
   // retard: un scroll suau passa per pàgines intermèdies abans d'arribar-hi.
+  // Tolerància d'1 pàgina: la ref sol estar a baix de tot (taula de preus), i
+  // en centrar-la l'observer sovint marca la pàgina següent com a "actual"
+  // encara que la ref segueixi ben visible — no s'ha d'esborrar en aquest cas.
   if (hlRef) {
     clearTimeout(hlClearTimer);
-    if (n !== hlRef.page) hlClearTimer = setTimeout(() => {
-      if (hlRef && currentPage !== hlRef.page) clearRefHighlight();
+    if (Math.abs(n - hlRef.page) > 1) hlClearTimer = setTimeout(() => {
+      if (hlRef && Math.abs(currentPage - hlRef.page) > 1) clearRefHighlight();
     }, 1500);
   }
   updateRefsPanel();
 }
 
-function goTo(n) {
+function goTo(n, { scroll = true } = {}) {
   n = Math.max(1, Math.min(totalPages, n));
   if (flipModeActive && flipGoTo) { flipGoTo(n); return; }
   const dist = Math.abs(n - currentPage);
@@ -2362,7 +2365,17 @@ function goTo(n) {
     slots[n - 1]?.scrollIntoView({ behavior: 'instant', block: 'start' });
     setTimeout(() => { observerReady = true; }, 350);
   } else {
-    slots[n - 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Short jump: SEMPRE renderitza la destinació (i el rang PRERENDER), perquè
+    // amb scroll:false (clic de ref) l'scrollIntoView ja no dispara el
+    // renderitzat via l'IntersectionObserver — highlightRef() faria polling
+    // etern d'un textLayer que no arribaria a existir. Només l'animació de
+    // scroll és condicional; renderSlot és idempotent (early-return si ja
+    // renderitzat o en cua), així que la navegació normal no en surt afectada.
+    renderSlot(n);
+    for (let i = Math.max(1, n - PRERENDER); i <= Math.min(totalPages, n + PRERENDER); i++) {
+      renderSlot(i);
+    }
+    if (scroll) slots[n - 1]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
@@ -3000,7 +3013,7 @@ async function loadPageRefs() {
     if (m) {
       const code = m[1].toUpperCase();
       const pg = codePage.get(code);
-      if (pg) { goTo(pg); highlightRef(pg, code); }
+      if (pg) { goTo(pg, { scroll: false }); highlightRef(pg, code); }
     }
   } catch(_) {}
 }
@@ -3056,7 +3069,7 @@ function buildRelList(ref) {
       <span class="ref-rel-main">${escapeHtml(code)} · <span class="rel-price">${escapeHtml(r.pr)} €</span> · <span class="rel-page">${s.pageAbbr} ${r.pg}</span></span>`;
     row.addEventListener('click', () => {
       phCapture('relation_clicked', { from: ref, to: code, kind, page: r.pg });
-      goTo(r.pg);
+      goTo(r.pg, { scroll: false });
       highlightRef(r.pg, code);
     });
     list.appendChild(row);
@@ -3155,7 +3168,7 @@ function makeRefRow(r, onStarToggle) {
     <span class="search-result-page">${escapeHtml(r.ref)}</span>
     <span class="search-result-snippet">${famHtml}</span>
     <span class="fav-star${isFav(r.ref) ? ' on' : ''}" role="button" aria-label="Favorito">${STAR_SVG}</span>`;
-  btn.addEventListener('click', () => { phCapture('reference_clicked', { ref: r.ref, page: r.page, group_id: g.id }); goTo(r.page); closeSearch(); closeFavs(); highlightRef(r.page, r.ref); });
+  btn.addEventListener('click', () => { phCapture('reference_clicked', { ref: r.ref, page: r.page, group_id: g.id }); goTo(r.page, { scroll: false }); closeSearch(); closeFavs(); highlightRef(r.page, r.ref); });
   const star = btn.querySelector('.fav-star');
   star.addEventListener('click', e => {
     e.stopPropagation();
@@ -3466,6 +3479,11 @@ function highlightRef(pageNum, code, scroll = true) {
       const groups = findRefSpans(tl, code);
       if (groups.length) {
         groups.forEach(g => { const box = addRefHlBox(tl, g); if (box) hlBoxes.push(box); });
+        // Fixa currentPage a la pàgina de la ref: el hlClearTimer pendent
+        // (programat per updateNav durant el scroll) veurà currentPage ===
+        // hlRef.page en disparar-se i no esborrarà el ressaltat acabat de pintar.
+        currentPage = pageNum;
+        clearTimeout(hlClearTimer);
         if (scroll) groups[0][0].scrollIntoView({ block: 'center', behavior: 'smooth' });
         clearInterval(timer);
         return;
