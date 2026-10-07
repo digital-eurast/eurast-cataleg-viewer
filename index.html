@@ -2239,14 +2239,12 @@ async function submitLead(email, company, countryCode, countryName) {
   triggerDownload();
 }
 
-// Intercept the download button
+// Download button: the PDF downloads straight away, no lead form (Sergi, 07/10/2026).
+// The modal is kept in place but no longer opened; to bring it back, call openModal() here.
 document.getElementById('btn-dl').addEventListener('click', e => {
   e.preventDefault();
-  if (localStorage.getItem(LEAD_LS_KEY)) {
-    triggerDownload(); // Returning visitor — skip modal
-    return;
-  }
-  openModal();
+  phCapture('download_clicked', { lang: currentLang });
+  triggerDownload();
 });
 
 // Submit is enabled only when privacy is accepted AND a country is chosen
