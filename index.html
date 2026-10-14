@@ -1785,26 +1785,45 @@ function unloadSlot(num) {
 // ── VIRTUAL SCROLL OBSERVER ────────────────────────────────────────
 let observerReady = false;
 
+// Pàgina actual = la que ocupa més alçada visible del visor, mesurada amb
+// getBoundingClientRect en cada scroll. Abans es triava amb les entrades de
+// l'IntersectionObserver, però aquest només avisa quan una pàgina creua el
+// llindar 0.3: amb scroll ràpid amunt i avall, o després d'un salt (mentre
+// observerReady és false els avisos es perden), la pàgina que realment es veu
+// podia no sortir a cap batch i el quadre REFS es quedava amb els codis d'una
+// altra pàgina fins a refrescar.
+function pickVisiblePage() {
+  if (!observerReady || flipModeActive) return;
+  const vr = viewer.getBoundingClientRect();
+  let best = null, bestH = 0;
+  for (const s of slots) {
+    const r = s.getBoundingClientRect();
+    if (r.bottom <= vr.top) continue;
+    if (r.top >= vr.bottom) break;   // slots en ordre: ja som sota el visor
+    const h = Math.min(r.bottom, vr.bottom) - Math.max(r.top, vr.top);
+    if (h > bestH) { bestH = h; best = parseInt(s.dataset.page); }
+  }
+  if (best && best !== currentPage) {
+    currentPage = best;
+    updateNav(best);
+  }
+}
+let pickRaf = 0;
+viewer.addEventListener('scroll', () => {
+  if (pickRaf) return;
+  pickRaf = requestAnimationFrame(() => { pickRaf = 0; pickVisiblePage(); });
+}, { passive: true });
+
 const pageObs = new IntersectionObserver(entries => {
   if (!observerReady) return;
-  // Multiple slots can cross the 0.3 threshold in the same batch while
-  // scrolling (the incoming page becomes visible before the outgoing one
-  // leaves). Picking the MOST visible one — not just the last entry in the
-  // batch — keeps currentPage (and the refs panel it drives) from jumping to
-  // a neighboring page.
-  let best = null;
   entries.forEach(e => {
     if (!e.isIntersecting) return;
     const n = parseInt(e.target.dataset.page);
-    if (!best || e.intersectionRatio > best.ratio) best = { n, ratio: e.intersectionRatio };
     for (let i = Math.max(1, n - PRERENDER); i <= Math.min(totalPages, n + PRERENDER); i++) {
       renderSlot(i);
     }
   });
-  if (best) {
-    currentPage = best.n;
-    updateNav(best.n);
-  }
+  pickVisiblePage();
   // Use DOM as source of truth — rendered Set may lag behind actual state
   viewer.querySelectorAll('.page-slot canvas').forEach(cvs => {
     const r = parseInt(cvs.closest('.page-slot')?.dataset.page);
